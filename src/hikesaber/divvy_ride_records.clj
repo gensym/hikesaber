@@ -16,6 +16,9 @@
        (tf/parse time-formatter)
        (tp/weekday?)))
 
+(defn annotate-with [key f record]
+  (assoc record key (f record)))
+
 
 (defn to-minute-interval-label [interval-length record]
   (let [num-slices (int (/ 60 interval-length))
