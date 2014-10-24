@@ -19,7 +19,6 @@
 (defn annotate-with [key f record]
   (assoc record key (f record)))
 
-
 (defn to-minute-interval-label [interval-length record]
   (let [num-slices (int (/ 60 interval-length))
         all-minute-labels (map (partial format "%02d") (range 60))
@@ -29,10 +28,9 @@
                     (+ (.getMinuteOfHour dt)
                        (* 60 (.getHourOfDay dt)))
                     interval-length)]
-    (str (int (/ increments num-slices))
+    (str (format "%02d" (int (/ increments num-slices)))
          ":"
          (nth minute-labels (mod increments num-slices)))))
-
 
 
 (defn- to-map-seq [s]
@@ -45,3 +43,6 @@
         entries (.entries zipfile)
         entry (.nextElement entries)]
     (line-seq (BufferedReader. (InputStreamReader. (.getInputStream zipfile entry)))))  )
+
+(defn load-from-file []
+  (to-map-seq (from-file filename)))

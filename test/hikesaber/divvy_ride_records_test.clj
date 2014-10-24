@@ -14,6 +14,10 @@
     (is (= "23:50" (d/to-minute-interval-label 10 record)))
     (is (= "23:30" (d/to-minute-interval-label 30 record)))))
 
+(deftest should-use-sortable-minute-interval-label
+  (let [record {:starttime "6/30/2024 0:23"}]
+    (is (= "00:15" (d/to-minute-interval-label 15 record)))))
+
 (deftest should-annotate-with
   (let [record {:key 23}]
     (is (= {:key 23
