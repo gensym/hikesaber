@@ -27,10 +27,6 @@
     :starttime (fn [v] [:starttime (to-later-time-format v)])
     :birthday (fn [v] [:birthyear v])}})
 
-(defn mr [masseuse record]
-  (reduce
-   (fn [m [k v]] (assoc m k v)) {} record))
-
 (defn massage-record [masseuse record]
   "Masseuse is a hashmap of keys to functions. Each function takes a single argument. For each key in record that has a function in masseuse, replace the the key-value pair in the record with that returned from call the function on the original value in the record."
   (reduce
@@ -93,6 +89,7 @@
 (defn load-from-files []
   (mapcat (fn [[filename data-mappings]]
             (->> filename
-                (from-file)
-                (to-map-seq)))
+                 (from-file)
+                 (to-map-seq)
+                 (map #(massage-record data-mappings %)))) 
           data-files))
