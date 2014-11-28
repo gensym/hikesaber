@@ -12,7 +12,8 @@
 
 (def time-formatter (tf/formatter "M/d/yyyy H:m"))
 (def legacy-time-formatter (tf/formatter "yyyy-M-d H:m"))
-(def month-with-year-formatter (tf/formatter "MMMM yyyy"))
+(def month-formatter (tf/formatter "MM"))
+(def year-formatter (tf/formatter "yyyy"))
 
 (defn to-later-time-format [v]
   (->> v
@@ -43,10 +44,9 @@
        (tp/weekday?)))
 
 (defn month-with-year [record]
-  (->> record
-       (:starttime)
-       (tf/parse time-formatter)
-       (tf/unparse month-with-year-formatter)))
+  (let [d (tf/parse time-formatter (:starttime record))]
+    {:month (tf/unparse month-formatter d)
+     :year (tf/unparse year-formatter d)}))
 
 (defn annotate-with [key f record]
   (assoc record key (f record)))

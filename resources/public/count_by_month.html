@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <title>Count by month</title>
+    <link href="css/styles.css" rel="stylesheet">
+    <script type="text/javascript" src="js/d3/d3.min.js"></script>
+    <script type="text/javascript" src="js/jquery/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="js/barChart.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+
+      $(function() {
+	  d3.json("/monthly-counts.json", function(error, dataset) {
+	      barChart("svg#display", dataset);
+	  });
+      });
+    </script>
+    <svg id="display"></svg>
+  </body>
+</html>

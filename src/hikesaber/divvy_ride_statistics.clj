@@ -3,11 +3,10 @@
 
 (def loaded-records (records/load-from-files))
 
-(defn count-by [loaded-records f]
+(defn count-by [f loaded-records]
   (->> loaded-records
        (group-by f)
-       (map (fn [[k v]] [k (count v)]))
-       (sort-by first)))
+       (map (fn [[k v]] [k (count v)]))))
 
 (defn ->>to-> [f]
   (fn [& args]
@@ -17,10 +16,14 @@
 (def filter> (->>to-> filter))
 
 (defn count-by-time-of-day [loaded-records num-minutes weekday?]
-  (-> loaded-records
-      (filter> #(= weekday? (records/weekday? %)))
-      (count-by (partial records/to-minute-interval-label num-minutes))))
+  (->> loaded-records
+      (filter #(= weekday? (records/weekday? %)))
+      (count-by (partial records/to-minute-interval-label num-minutes))
+      (map (fn [[time count]] {:time time :count count :weekday? weekday?}))
+      (sort-by :time)))
 
 (defn count-by-absolute-month [loaded-records]
-  (-> loaded-records
-      (count-by records/month-with-year)))
+  (->> loaded-records
+      (count-by records/month-with-year)
+      (map (fn [[{month :month year :year} count]] {:month month :year year :count count}))
+      (sort-by (fn [{month :month year :year}] (str year month)))))

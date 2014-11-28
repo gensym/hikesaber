@@ -1,14 +1,9 @@
-(ns hikesaber.core)
-
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(ns hikesaber.core
+  (:gen-class)
+  (:require [hikesaber.webserver :as webserver]))
 
 
-(defn divvy-data-lines []
-  (let [zipfile  (ZipFile.
-                  "/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2014-Q1Q2.zip")
-        entries (.entries zipfile)
-        entry (.nextElement entries)]
-    (line-seq (BufferedReader. (InputStreamReader. (.getInputStream zipfile entry))))))
+(defn -main []
+  (webserver/start webserver/loaded-records)
+  (println "Started"))
+

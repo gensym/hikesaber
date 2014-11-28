@@ -6,13 +6,17 @@
             [clojure.data.json :as json]
             [hikesaber.divvy-ride-statistics :as divvy]))
 
-(def loaded-records (hikesaber.divvy-ride-records/load-from-file))
+(def loaded-records (hikesaber.divvy-ride-records/load-from-files))
 
 (def rides-by-time-of-day
   (memoize
    (fn [loaded-records weekend?]
-     (map (fn [[time count]] {:time time :count count :weekend? weekend?})
-          (divvy/count-by-time-of-day loaded-records 15 (not weekend?))))))
+     (divvy/count-by-time-of-day loaded-records 15 (not weekend?)))))
+
+(def rides-by-month
+  (memoize
+   (fn [loaded-records]
+     (divvy/count-by-absolute-month loaded-records))))
 
 (defn string-response [data]
   {:status 200
@@ -30,6 +34,7 @@
    (comp/GET "/weekday-rides.json" {{weekend? :weekend} :params}
              (json-response
               (rides-by-time-of-day loaded-records (read-string (or weekend? "false")))))
+   (comp/GET "/monthly-counts.json" req (json-response (rides-by-month loaded-records)))
    (comp/GET "/ping" req {:status 200 :headers {"Content-Type" "text/html"} :body "hello"})
    (route/not-found "<p>Page not found.</p>")))
 
