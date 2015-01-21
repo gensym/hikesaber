@@ -4,17 +4,40 @@
     <link href="css/styles.css" rel="stylesheet">
     <script type="text/javascript" src="js/d3/d3.min.js"></script>
     <script type="text/javascript" src="js/jquery/jquery-2.1.1.min.js"></script>
-    <script type="text/javascript" src="js/barChart.js"></script>
+    <script type="text/javascript" src="js/barChartMonthly.js"></script>
   </head>
   <body>
     <script type="text/javascript">
 
+      function month(intLabel) {
+          return ["Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec"][parseInt(intLabel - 1)];
+      }
+
+      function xTickFormatter(s) {
+          return month(s.substring(0, 2)) + " " + s.substring(3);
+      }
+
+      var xFunction = function(d) {
+	return d.month + " " + d.year.substring(2);
+      }
+
       $(function() {
 	  d3.json("/monthly-counts.json", function(error, dataset) {
-	      barChart("svg#display", dataset);
+	      barChart(xFunction, xTickFormatter, "svg#display", dataset);
 	  });
       });
     </script>
-    <svg id="display"></svg>
+    <svg id="display" style="height:500px;width:950px"></svg>
   </body>
 </html>

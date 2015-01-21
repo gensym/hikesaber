@@ -1,5 +1,6 @@
 (ns hikesaber.webserver
   (:require [org.httpkit.server :as hs]
+            [ring.util.response :as resp]
             [compojure.core :as comp]
             [compojure.route :as route]
             [compojure.handler :as handler]
@@ -31,7 +32,8 @@
 (defn make-routes [loaded-records]
   (comp/routes
    (route/resources "/")
-   (comp/GET "/weekday-rides.json" {{weekend? :weekend} :params}
+   (comp/GET "/" [] (resp/resource-response "index.html" {:root "public"}))
+   (comp/GET "/time-of-day-counts.json" {{weekend? :weekend} :params}
              (json-response
               (rides-by-time-of-day loaded-records (read-string (or weekend? "false")))))
    (comp/GET "/monthly-counts.json" req (json-response (rides-by-month loaded-records)))

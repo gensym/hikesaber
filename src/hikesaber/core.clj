@@ -4,6 +4,7 @@
 
 
 (defn -main []
-  (webserver/start webserver/loaded-records)
-  (println "Started"))
+  (let [stop (webserver/start webserver/loaded-records)]
+    (println "started")
+    stop))
 
