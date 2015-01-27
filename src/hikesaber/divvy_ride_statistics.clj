@@ -22,6 +22,16 @@
       (map (fn [[time count]] {:time time :count count :weekday? weekday?}))
       (sort-by :time)))
 
+
+
+(defn num-days-in-month [loaded-records]
+  "Get the number of days in a month that we have records for. This lets us exclude days in which no stations were operational "
+  (loop [lr loaded-records months (transient {})]
+    (if (empty? lr)
+      (persistent! months)
+      (let [day (records/day-with-month (first lr))]
+        (recur (rest lr) (assoc! months day (inc (get months day 0))))))))
+
 (defn count-by-absolute-month [loaded-records]
   (->> loaded-records
       (count-by records/month-with-year)

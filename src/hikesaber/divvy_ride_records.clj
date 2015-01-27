@@ -1,8 +1,6 @@
 (ns hikesaber.divvy-ride-records
   (:require  [camel-snake-kebab.core :refer :all]
-             [clj-time.core :as t]
-             [clj-time.predicates :as tp]
-             [clj-time.format :as tf]
+             [hikesaber.dates :as dates]
              [clojure.string :as string])
   (:import [java.io BufferedReader InputStreamReader]
            [java.util.zip ZipFile ZipEntry ZipInputStream]))
@@ -10,22 +8,12 @@
 (def filenames ["/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2014-Q1Q2.zip"
                 "/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2013.zip"])
 
-(def time-formatter (tf/formatter "M/d/yyyy H:m"))
-(def legacy-time-formatter (tf/formatter "yyyy-M-d H:m"))
-(def month-formatter (tf/formatter "MM"))
-(def year-formatter (tf/formatter "yyyy"))
-
-(defn to-later-time-format [v]
-  (->> v
-      (tf/parse legacy-time-formatter)
-      (tf/unparse time-formatter)))
-
 (def data-files
   {"/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2014-Q1Q2.zip"
    {}
    "/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2013.zip"
-   {:stoptime (fn [v] [:stoptime (to-later-time-format v)])
-    :starttime (fn [v] [:starttime (to-later-time-format v)])
+   {:stoptime (fn [v] [:stoptime (dates/to-later-time-format v)])
+    :starttime (fn [v] [:starttime (dates/to-later-time-format v)])
     :birthday (fn [v] [:birthyear v])}})
 
 (defn massage-record [masseuse record]
@@ -38,15 +26,13 @@
    record))
 
 (defn weekday? [record]
-  (->> record
-       (:starttime)
-       (tf/parse time-formatter)
-       (tp/weekday?)))
+  (dates/weekday? (:starttime record)))
 
 (defn month-with-year [record]
-  (let [d (tf/parse time-formatter (:starttime record))]
-    {:month (tf/unparse month-formatter d)
-     :year (tf/unparse year-formatter d)}))
+  (dates/month-year (:starttime record)))
+
+(defn day-with-month [record]
+  (dates/day-month-year (:starttime record)))
 
 (defn annotate-with [key f record]
   (assoc record key (f record)))
@@ -55,7 +41,7 @@
   (let [num-slices (int (/ 60 interval-length))
         all-minute-labels (map (partial format "%02d") (range 60))
         minute-labels (map #(nth all-minute-labels (* interval-length %)) (range num-slices))
-        dt (tf/parse time-formatter (:starttime record))
+        dt (dates/to-datetime (:starttime record))
         increments (/
                     (+ (.getMinuteOfHour dt)
                        (* 60 (.getHourOfDay dt)))

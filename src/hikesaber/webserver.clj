@@ -1,5 +1,6 @@
 (ns hikesaber.webserver
-  (:require [org.httpkit.server :as hs]
+  (:require [clojure.core.memoize :as memo]
+            [org.httpkit.server :as hs]
             [ring.util.response :as resp]
             [compojure.core :as comp]
             [compojure.route :as route]
@@ -7,17 +8,19 @@
             [clojure.data.json :as json]
             [hikesaber.divvy-ride-statistics :as divvy]))
 
-(def loaded-records (hikesaber.divvy-ride-records/load-from-files))
+(def loaded-records divvy/loaded-records)
 
 (def rides-by-time-of-day
-  (memoize
+  (memo/lru
    (fn [loaded-records weekend?]
-     (divvy/count-by-time-of-day loaded-records 15 (not weekend?)))))
+     (divvy/count-by-time-of-day loaded-records 15 (not weekend?)))
+   :lru/threshold 10))
 
 (def rides-by-month
-  (memoize
+  (memo/lru
    (fn [loaded-records]
-     (divvy/count-by-absolute-month loaded-records))))
+     (divvy/count-by-absolute-month loaded-records))
+   :lru/threshold 10))
 
 (defn string-response [data]
   {:status 200
