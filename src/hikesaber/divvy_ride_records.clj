@@ -79,3 +79,6 @@
                  (to-map-seq)
                  (map #(massage-record data-mappings %)))) 
           data-files))
+
+(def loaded-records (into [] (load-from-files)))
+
