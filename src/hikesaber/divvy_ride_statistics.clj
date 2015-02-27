@@ -1,12 +1,19 @@
 (ns hikesaber.divvy-ride-statistics
-  (:require [hikesaber.divvy-ride-records :as records]))
+  (:require [hikesaber.divvy-ride-records :as records]
+            [hikesaber.dates :as dates]
+            [clojure.core.reducers :as r]))
 
-(def loaded-records (records/load-from-files))
+(def loaded-records records/loaded)
 
 (defn count-by [f loaded-records]
-  (->> loaded-records
-       (group-by f)
-       (map (fn [[k v]] [k (count v)]))))
+  (let [produce-count (fn
+                        ([] {})
+                        ([m v] (let [k (f v)]
+                                 (assoc m k (inc (get m k 0))))))
+        merge-counts (fn
+                       ([] {})
+                       ([& m] (apply merge-with + m)))]
+    (r/fold merge-counts produce-count loaded-records)))
 
 (defn ->>to-> [f]
   (fn [& args]
@@ -15,14 +22,18 @@
 
 (def filter> (->>to-> filter))
 
+(defn cbtod [loaded-records num-minutes weekday?]
+  (let [to-minute-interval (records/to-minute-interval num-minutes)]
+    (->> loaded-records
+         (filter #(= weekday? (records/weekday? %)))
+         (count-by to-minute-interval))))
+
 (defn count-by-time-of-day [loaded-records num-minutes weekday?]
   (->> loaded-records
       (filter #(= weekday? (records/weekday? %)))
       (count-by (partial records/to-minute-interval-label num-minutes))
       (map (fn [[time count]] {:time time :count count :weekday? weekday?}))
       (sort-by :time)))
-
-
 
 (defn num-days-in-month [loaded-records]
   "Get the number of days in a month that we have records for. This lets us exclude days in which no stations were operational "
@@ -35,5 +46,9 @@
 (defn count-by-absolute-month [loaded-records]
   (->> loaded-records
       (count-by records/month-with-year)
-      (map (fn [[{month :month year :year} count]] {:month month :year year :count count}))
-      (sort-by (fn [{month :month year :year}] (str year month)))))
+      (map (fn [[d count]] {:date d
+                            :month (dates/to-month-string d)
+                            :year (dates/to-year-string d)
+                            :count count}))
+      (sort-by :date)
+      (map #(dissoc % :date))))

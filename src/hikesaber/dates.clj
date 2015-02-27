@@ -4,6 +4,7 @@
             [clj-time.predicates :as tp]
             [clj-time.format :as tf]))
 
+(def month-year-formatter (tf/formatter "M/d/yyyy"))
 (def time-formatter (tf/formatter "M/d/yyyy H:m"))
 (def legacy-time-formatter (tf/formatter "yyyy-M-d H:m"))
 
@@ -14,6 +15,9 @@
 (def memo-parse (memo/lru (fn [s] (tf/parse time-formatter s))
                           :lru/threshold 10))
 
+(def memo-parse-month-year (memo/lru (fn [s] (tf/parse month-year-formatter s))
+                                     :lru/threshold 10))
+
 (def to-month-string (memo/lru (fn [d] (tf/unparse month-formatter d))
                                :lru/threshold 10))
 
@@ -23,26 +27,24 @@
 (def to-day-string (memo/lru (fn [d] (tf/unparse day-formatter d))
                              :lru/threshold 10))
 
-(defn to-later-time-format [timestr]
+(defn from-2014-time-format [timestr]
   (->> timestr
-       (tf/parse legacy-time-formatter)
-       (tf/unparse time-formatter)))
+       (tf/parse time-formatter)))
 
-(defn weekday? [timestr]
+(defn from-2013-time-format [timestr]
   (->> timestr
-       (memo-parse)
-       (tp/weekday?)))
+       (tf/parse legacy-time-formatter)))
+
+(defn weekday? [datetime]
+  (tp/weekday? datetime))
 
 (defn to-datetime [timestr]
   (memo-parse timestr))
 
-(defn month-year [timestr]
-  (let [d (memo-parse timestr)]
-    {:month (to-month-string d)
-     :year (to-year-string d)}))
+(defn month-year [datetime]
+  (.withTimeAtStartOfDay (.withDayOfMonth datetime 1)))
 
-(defn day-month-year [timestr]
-  (let [d (memo-parse timestr)]
-    {:day (to-day-string d)
-     :month (to-month-string d)
-     :year (to-year-string d)}))
+(defn day-month-year [datetime]
+  {:day (to-day-string datetime)
+   :month (to-month-string datetime)
+   :year (to-year-string datetime)})

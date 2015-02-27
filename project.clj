@@ -13,6 +13,7 @@
                                                     javax.jms/jms
                                                     com.sun.jmdk/jmxtools
                                                     com.sun.jmx/jmxri]]
+                 [criterium "0.4.3"]
                  [http-kit "2.1.16"]
                  [ring "1.2.1"]
                  [compojure "1.1.9"]
@@ -20,4 +21,5 @@
 
     :main ^:skip-aot hikesaber.core
     :target-path "target/%s"
+    :jvm-opts ["-DinternStrings=true" "-XX:StringTableSize=1000003"]
     :profiles {:uberjar {:aot :all}})
