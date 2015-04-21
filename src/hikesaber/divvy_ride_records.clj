@@ -3,20 +3,27 @@
              [hikesaber.dates :as dates]
              [clojure.string :as string]
              [hikesaber.performance-tools :as perf])
-  (:import [java.io BufferedReader InputStreamReader]
+  (:import [java.io BufferedReader InputStreamReader File]
            [java.util.zip ZipFile ZipEntry ZipInputStream]))
-(def filename "/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2014-Q1Q2.zip")
-(def filenames ["/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2014-Q1Q2.zip"
-                "/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2013.zip"])
+
+(def datafile (clojure.java.io/resource "data/datachallenge.zip"))
+
+
+(def default-masseuse
+  {:stoptime (fn [v] [:stoptime (dates/from-2014-time-format v)])
+   :starttime (fn [v] [:starttime (dates/from-2014-time-format v)])})
 
 (def data-files
-  {"/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2014-Q1Q2.zip"
-   {:stoptime (fn [v] [:stoptime (dates/from-2014-time-format v)])
-    :starttime (fn [v] [:starttime (dates/from-2014-time-format v)])}
-   "/Users/daltenburg/data/divvy/Divvy_Stations_Trips_2013.zip"
-   {:stoptime (fn [v] [:stoptime (dates/from-2013-time-format v)])
-    :starttime (fn [v] [:starttime (dates/from-2013-time-format v)])
-    :birthday (fn [v] [:birthyear v])}})
+  [
+   ["datachallenge/Divvy_Stations_Trips_2013/Divvy_Trips_2013.csv"
+    {:stoptime (fn [v] [:stoptime (dates/from-2013-time-format v)])
+     :starttime (fn [v] [:starttime (dates/from-2013-time-format v)])
+     :birthday (fn [v] [:birthyear v])}]
+
+   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q1Q2/Divvy_Trips_2014_Q1Q2.csv" default-masseuse]
+   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-07.csv"  default-masseuse]
+   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-0809.csv" default-masseuse]
+   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q4.csv" default-masseuse]])
 
 ;; These are properties that are known to have a finite set of values.
 ;; Be specifiying them, we can potentially decrease the memory footprint
@@ -90,31 +97,27 @@
     (map (fn [line] (zipmap keys (string/split line #",")))
          (rest s))))
 
-(defn from-file [filename]
-  (let [zipfile  (ZipFile. filename)
+(defn from-resource [resource]
+  (let [path (.getPath resource)
+        zipfile  (ZipFile. (.getPath resource))
         entries (enumeration-seq (.entries zipfile))
-        entry  (first (filter #(re-find #"Divvy_Trips.*\.csv$" (.getName %)) entries))]
-    (line-seq (BufferedReader. (InputStreamReader. (.getInputStream zipfile entry))))))
-
-(defn from-files [filenames]
-  (mapcat )
-  (let [zipfile  (ZipFile. filename)
-        entries (.entries zipfile)
-        entry (.nextElement entries)]
-    (line-seq (BufferedReader. (InputStreamReader. (.getInputStream zipfile entry)))))  )
-
-(defn load-from-file []
-  (to-map-seq (from-file filename)))
+        ride-entries (filter #(re-find #"Divvy_Trips.*\.csv$" (.getName %)) entries)]
+    (reduce (fn [m v] (assoc m (.getName v)
+                             (line-seq (BufferedReader.
+                                         (InputStreamReader. (.getInputStream zipfile v))))))
+            {}
+         ride-entries)))
 
 (defn load-from-files []
-  (mapcat (fn [[filename data-mappings]]
-            (->> filename
-                 (from-file)
-                 (to-map-seq)
-                 (map #(massage-record (merge
-                                        repeated-string-properties-masseuses
-                                        data-mappings) %))))
-          data-files))
+  (let [fileseqs (from-resource datafile)]
+    (mapcat (fn [[filename data-mappings]]
+              (->> filename
+                   fileseqs
+                   (to-map-seq)
+                   (map #(massage-record (merge
+                                          repeated-string-properties-masseuses
+                                          data-mappings) %))))
+            data-files)))
 
-;; Create static definition so that toher namespaces don't need to reload them with every compile
+;; Create static definition so that other namespaces don't need to reload them with every compile
 (def loaded (load-from-files))
