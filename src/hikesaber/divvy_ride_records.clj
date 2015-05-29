@@ -1,6 +1,5 @@
 (ns hikesaber.divvy-ride-records
-  (:require  [camel-snake-kebab.core :refer :all]
-             [hikesaber.dates :as dates]
+  (:require  [hikesaber.dates :as dates]
              [clojure.string :as string]
              [hikesaber.performance-tools :as perf])
   (:import [java.io BufferedReader InputStreamReader File]
@@ -91,9 +90,12 @@
          ":"
          (nth minute-labels (mod increments num-slices)))))
 
+(defn snake->kebab-case [s]
+  (string/replace s "_" "-"))
+
 
 (defn- to-map-seq [s]
-  (let [keys (map (comp keyword ->kebab-case) (string/split (first s) #","))]
+  (let [keys (map (comp keyword snake->kebab-case) (string/split (first s) #","))]
     (map (fn [line] (zipmap keys (string/split line #",")))
          (rest s))))
 

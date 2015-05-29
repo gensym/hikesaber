@@ -1,6 +1,5 @@
 (ns hikesaber.off-heap-ride-records
-  (:require  [camel-snake-kebab.core :refer :all]
-             [hikesaber.dates :as dates]
+  (:require  [hikesaber.dates :as dates]
              [clojure.string :as string]
              [hikesaber.divvy-ride-records :as records]
              [hikesaber.util.integer-ids :as ids]

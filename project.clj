@@ -16,8 +16,7 @@
                  [criterium "0.4.3"]
                  [http-kit "2.1.16"]
                  [ring "1.2.1"]
-                 [compojure "1.1.9"]
-                 [camel-snake-kebab "0.2.4"]]
+                 [compojure "1.1.9"]]
 
     :main ^:skip-aot hikesaber.core
     :target-path "target/%s"
