@@ -2,7 +2,8 @@
   (:require [clojure.core.memoize :as memo]
             [clj-time.core :as t]
             [clj-time.predicates :as tp]
-            [clj-time.format :as tf]))
+            [clj-time.format :as tf])
+  (:import [org.joda.time DateTime]))
 
 (def month-year-formatter (tf/formatter "M/d/yyyy"))
 (def time-formatter (tf/formatter "M/d/yyyy H:m"))
@@ -34,6 +35,9 @@
 (defn from-2013-time-format [timestr]
   (->> timestr
        (tf/parse legacy-time-formatter)))
+
+(defn from-millis [millis]
+  (DateTime. millis))
 
 (defn weekday? [datetime]
   (tp/weekday? datetime))
