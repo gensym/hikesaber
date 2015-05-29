@@ -18,7 +18,12 @@
                  [ring "1.2.1"]
                  [compojure "1.1.9"]]
 
-    :main ^:skip-aot hikesaber.core
-    :target-path "target/%s"
-    :jvm-opts ["-DinternStrings=true" "-XX:StringTableSize=1000003"]
-    :profiles {:uberjar {:aot :all}})
+  :source-paths ["src/main/clojure"]
+  :java-source-paths ["src/main/java"]
+  :test-paths ["src/test/clojure"]
+  ;;:prep-tasks [["compile" "hikesaber.benchmark.harness"] "javac" "compile"]
+
+  :main ^:skip-aot hikesaber.core
+  :target-path "target/%s"
+  :jvm-opts ["-DinternStrings=true" "-XX:StringTableSize=1000003"]
+  :profiles {:uberjar {:aot :all}})
