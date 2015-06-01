@@ -16,14 +16,18 @@
                  [criterium "0.4.3"]
                  [http-kit "2.1.16"]
                  [ring "1.2.1"]
-                 [compojure "1.1.9"]]
+                 [compojure "1.1.9"]
+                 [org.openjdk.jmh/jmh-core "1.9.3"]
+                 [org.openjdk.jmh/jmh-generator-annprocess "1.9.3"]]
 
   :source-paths ["src/main/clojure"]
   :java-source-paths ["src/main/java"]
   :test-paths ["src/test/clojure"]
-  ;;:prep-tasks [["compile" "hikesaber.benchmark.harness"] "javac" "compile"]
+  :profiles { :benchmark {:main org.openjdk.jmh.Main
+                          :java-source-paths ["src/main/java" "src/benchmark/java"]
+                          :prep-tasks [["compile" "hikesaber.benchmark.harness"] "javac" "compile"]}
+             :uberjar {:aot :all}}
 
   :main ^:skip-aot hikesaber.core
   :target-path "target/%s"
-  :jvm-opts ["-DinternStrings=true" "-XX:StringTableSize=1000003"]
-  :profiles {:uberjar {:aot :all}})
+  :jvm-opts ["-DinternStrings=true" "-XX:StringTableSize=1000003"])
