@@ -4,12 +4,14 @@
    :methods [#^{:static true} [countUniqueBikes [Object] int]
              #^{:static true} [loadRecords [] Object]
              ])
-  (:require [hikesaber.divvy-ride-records :as records]))
+  (:require [hikesaber.divvy-ride-records :as records]
+            [hikesaber.off-heap-ride-records :as ohr]))
 
 (defn -loadRecords []
-  (let [ret records/loaded]
-    (count ret) ;; force loading
-    ret))
+  (let [recs records/loaded
+        record-coll (ohr/make-record-collection recs)]
+    {:records recs
+     :offheap record-coll}))
 
 ;; Result "countUniqueBikes":
 ;;   0.666 ±(99.9%) 0.003 s/op [Average]
@@ -24,7 +26,7 @@
 ;; Records.countUniqueBikes   avgt  200  0.666 ± 0.003   s/op
 
 (defn -countUniqueBikes [records]
-  (loop [coll records
+  (loop [coll (:records records)
          ids #{}]
     (if (empty? coll)
       (count ids)

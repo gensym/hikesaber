@@ -68,10 +68,12 @@
 (def read-int (comp int read-string))
 (def read-long read-string)
 (def user-type->id {"Customer" \C
-                    "Member" \M})
+                    "Member" \M
+                    "Dependent" \D})
 
 (def id->user-type {\C "Customer"
-                    \M "Member"})
+                    \M "Member"
+                    \D "Dependent"})
 
 (defn make-record-collection [loaded-records]
   (let [unsafe (getUnsafe)
@@ -80,7 +82,8 @@
         address (.allocateMemory unsafe required-size)]
 
     (try
-      (loop [records loaded-records
+      (loop [idx 0
+             records loaded-records
              offset address]
         (if (empty? records)
 
@@ -88,17 +91,21 @@
            :count num-records
            :unsafe unsafe
            :destroy (fn [] (.freeMemory unsafe address))}
-
-          (let [record (first records)]
-            (set-trip-id! unsafe offset (read-long (:trip-id record)))
-            (set-from-station-id! unsafe offset (read-int (:from-station-id record)))
-            (set-to-station-id! unsafe offset (read-int (:to-station-id record)))
-            (set-bike-id! unsafe offset (read-int (:bikeid record)))
-            (set-start-time! unsafe offset (.getMillis (:starttime record)))
-            (set-stop-time! unsafe offset (.getMillis (:stoptime record)))
-            (set-user-type! unsafe offset (user-type->id (:usertype record)))
-
-            (recur (next records)
+          (do
+            (let [record (first records)]
+              (try
+                (set-trip-id! unsafe offset (read-long (:trip-id record)))
+                (set-from-station-id! unsafe offset (read-int (:from-station-id record)))
+                (set-to-station-id! unsafe offset (read-int (:to-station-id record)))
+                (set-bike-id! unsafe offset (read-int (:bikeid record)))
+                (set-start-time! unsafe offset (.getMillis (:starttime record)))
+                (set-stop-time! unsafe offset (.getMillis (:stoptime record)))
+                (set-user-type! unsafe offset (user-type->id (:usertype record)))
+                (catch Exception e
+                  (throw (RuntimeException.
+                          (str "Failed parsing record " idx " (" record ")") e)))))
+            (recur (inc idx)
+                   (next records)
                    (+ offset object-size)))))
 
       (catch Throwable t

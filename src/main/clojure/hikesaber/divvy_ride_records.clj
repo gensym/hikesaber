@@ -10,14 +10,16 @@
 
 (def default-masseuse
   {:stoptime (fn [v] [:stoptime (dates/from-2014-time-format v)])
-   :starttime (fn [v] [:starttime (dates/from-2014-time-format v)])})
+   :starttime (fn [v] [:starttime (dates/from-2014-time-format v)])
+   :usertype (fn [v] [:usertype (get {"Subscriber" "Member"} v v)])})
 
 (def data-files
   [
    ["datachallenge/Divvy_Stations_Trips_2013/Divvy_Trips_2013.csv"
-    {:stoptime (fn [v] [:stoptime (dates/from-2013-time-format v)])
-     :starttime (fn [v] [:starttime (dates/from-2013-time-format v)])
-     :birthday (fn [v] [:birthyear v])}]
+    (merge default-masseuse
+           {:stoptime (fn [v] [:stoptime (dates/from-2013-time-format v)])
+            :starttime (fn [v] [:starttime (dates/from-2013-time-format v)])
+            :birthday (fn [v] [:birthyear v])})]
 
    ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q1Q2/Divvy_Trips_2014_Q1Q2.csv" default-masseuse]
    ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-07.csv"  default-masseuse]
