@@ -3,6 +3,7 @@ package org.gensym.hikesaber.benchmark;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.State;
@@ -18,6 +19,11 @@ public class Records {
 	@Setup(Level.Trial)
 	public void prepare() {
 	    records = harness.loadRecords();
+	}
+
+	@TearDown(Level.Trial)
+	public void check() {
+	    harness.unloadRecords(records);
 	}
     }
 
