@@ -30,6 +30,6 @@ public class Records {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     public int countUniqueBikes(LoadedRecords records) {
-	return harness.countUniqueBikesOffHeap(records.records);
+	return harness.countUniqueBikesOffHeapNth(records.records);
     }
 }

@@ -3,25 +3,25 @@
    :name org.gensym.hikesaber.benchmark.harness
    :methods [#^{:static true} [countUniqueBikes [Object] int]
              #^{:static true} [countUniqueBikesOffHeap [Object] int]
+             #^{:static true} [countUniqueBikesOffHeapNth [Object] int]
              #^{:static true} [loadRecords [] Object]
              #^{:static true} [unloadRecords [Object] Object]
              ])
   (:require [hikesaber.divvy-ride-records :as records]
             [hikesaber.off-heap-ride-records :as ohr]))
 
+;; This can be helpful
+(comment (set! *warn-on-reflection* true))
+
 (defn load-records-from [recs]
   (let [record-coll (ohr/make-record-collection recs)]
-    (println "Loading...")
     {:records recs
      :offheap record-coll}))
 
 (defn -loadRecords []
   (load-records-from records/loaded))
 
-
-
 (defn -unloadRecords [records]
-  (println "Unloading...")
   (ohr/destroy! (:offheap records)))
 
 
@@ -75,5 +75,25 @@
                (conj ids (ohr/get-bike-id unsafe offset)))))))
 
 
-
+;;Result "countUniqueBikes":
+;;  0.500 ±(99.9%) 0.009 s/op [Average]
+;;  (min, avg, max) = (0.425, 0.500, 0.613), stdev = 0.038
+;;  CI (99.9%): [0.491, 0.509] (assumes normal distribution)
+;;
+;;
+;;# Run complete. Total time: 01:03:01
+;;
+;;Benchmark                  Mode  Cnt  Score   Error  Units
+;;Records.countUniqueBikes  thrpt  200  2.139 ± 0.034  ops/s
+;;Records.countUniqueBikes   avgt  200  0.500 ± 0.009   s/op
+(defn -countUniqueBikesOffHeapNth [records]
+  (let [num-records (:count (:offheap records))
+        coll (:offheap records)]
+    (loop [i 0
+           ids #{}]
+      (if (= i num-records)
+        (count ids)
+        (let [record (ohr/nth coll i)]
+          (recur (inc i)
+                 (conj ids (ohr/get-bike-id record))))))))
 

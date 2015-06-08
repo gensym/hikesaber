@@ -1,9 +1,10 @@
-(ns hikesaber.off-heap-ride-records  
-  (:require  [hikesaber.dates :as dates]
-             [clojure.string :as string]
-             [hikesaber.divvy-ride-records :as records]
-             [hikesaber.util.integer-ids :as ids]
-             [hikesaber.performance-tools :as perf])
+(ns hikesaber.off-heap-ride-records
+  (:refer-clojure :exclude [nth])
+  (:require [hikesaber.dates :as dates]
+            [clojure.string :as string]
+            [hikesaber.divvy-ride-records :as records]
+            [hikesaber.util.integer-ids :as ids]
+            [hikesaber.performance-tools :as perf])
   (:import [java.io BufferedReader InputStreamReader File]
            [java.util.zip ZipFile ZipEntry ZipInputStream]
            [sun.misc Unsafe]))
@@ -38,8 +39,12 @@
 (defn set-to-station-id! [^sun.misc.Unsafe unsafe object-offset station-id]
   (.putInt unsafe (+ object-offset to-station-id-offset) station-id))
 
-(defn get-bike-id [^sun.misc.Unsafe unsafe object-offset]
-  (.getInt unsafe (+ object-offset bike-id-offset)))
+(defn get-bike-id
+  ([^sun.misc.Unsafe unsafe object-offset]
+     (.getInt unsafe (+ object-offset bike-id-offset)))
+  ([record]
+     (let [^sun.misc.Unsafe unsafe (:unsafe record)]
+       (.getInt unsafe (+ (:address record) bike-id-offset)))))
 
 (defn set-bike-id! [^sun.misc.Unsafe unsafe object-offset  bike-id]
   (.putInt unsafe (+ object-offset bike-id-offset) bike-id))
@@ -138,3 +143,8 @@
      :stoptime (dates/from-millis (get-stop-time unsafe address))
      :usertype (id->user-type (get-user-type unsafe address))
      }))
+
+
+(defn nth [record-collection i]
+  {:unsafe (:unsafe record-collection)
+   :address (+ (:address record-collection) (* i object-size))})
