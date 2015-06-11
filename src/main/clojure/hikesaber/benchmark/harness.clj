@@ -2,6 +2,7 @@
   (:gen-class
    :name org.gensym.hikesaber.benchmark.harness
    :methods [#^{:static true} [countUniqueBikes [Object] int]
+             #^{:static true} [countUniqueBikesTransduce [Object] int]
              #^{:static true} [countUniqueBikesOffHeap [Object] int]
              #^{:static true} [countUniqueBikesOffHeapNth [Object] int]
              #^{:static true} [loadRecords [] Object]
@@ -25,18 +26,11 @@
   (ohr/destroy! (:offheap records)))
 
 
+
 ;;Result "countUniqueBikes":
-;;  0.679 ±(99.9%) 0.002 s/op [Average]
-;;  (min, avg, max) = (0.656, 0.679, 0.697), stdev = 0.008
-;;  CI (99.9%): [0.677, 0.681] (assumes normal distribution)
-
-;;# Run complete. Total time: 01:36:26
-
-;;Benchmark                  Mode  Cnt  Score   Error  Units
-;;Records.countUniqueBikes  thrpt  200  1.468 ± 0.005  ops/s
-;;Records.countUniqueBikes   avgt  200  0.679 ± 0.002   s/op
-
-
+;;  0.658 ±(99.9%) 0.004 s/op [Average]
+;;  (min, avg, max) = (0.623, 0.658, 0.696), stdev = 0.016
+;;  CI (99.9%): [0.654, 0.662] (assumes normal distribution)
 (defn -countUniqueBikes [records]
   (loop [i 0
          coll (:records records)
@@ -49,18 +43,19 @@
 
 
 
-;;Result "countUniqueBikes":
-;;  0.289 ±(99.9%) 0.005 s/op [Average]
-;;  (min, avg, max) = (0.252, 0.289, 0.343), stdev = 0.020
-;;  CI (99.9%): [0.284, 0.294] (assumes normal distribution)
-;;
-;;
-;;# Run complete. Total time: 01:00:53
-;;
-;;Benchmark                  Mode  Cnt  Score   Error  Units
-;;Records.countUniqueBikes  thrpt  200  3.502 ± 0.073  ops/s
-;;Records.countUniqueBikes   avgt  200  0.289 ± 0.005   s/op
 
+;;Result "countUniqueBikesTransduce":
+;;  0.654 ±(99.9%) 0.004 s/op [Average]
+;;  (min, avg, max) = (0.618, 0.654, 0.710), stdev = 0.018
+;;  CI (99.9%): [0.650, 0.658] (assumes normal distribution)
+(defn -countUniqueBikesTransduce [records]
+  (count (transduce  (map :bikeid) conj #{} (:records records))))
+
+
+;;Result "countUniqueBikesOffHeap":
+;;  0.289 ±(99.9%) 0.006 s/op [Average]
+;;  (min, avg, max) = (0.261, 0.289, 0.349), stdev = 0.023
+;;  CI (99.9%): [0.284, 0.295] (assumes normal distribution)
 (defn -countUniqueBikesOffHeap [records]
   (let [num-records (:count (:offheap records))
         unsafe (:unsafe (:offheap records))
@@ -75,17 +70,10 @@
                (conj ids (ohr/get-bike-id unsafe offset)))))))
 
 
-;;Result "countUniqueBikes":
-;;  0.500 ±(99.9%) 0.009 s/op [Average]
-;;  (min, avg, max) = (0.425, 0.500, 0.613), stdev = 0.038
-;;  CI (99.9%): [0.491, 0.509] (assumes normal distribution)
-;;
-;;
-;;# Run complete. Total time: 01:03:01
-;;
-;;Benchmark                  Mode  Cnt  Score   Error  Units
-;;Records.countUniqueBikes  thrpt  200  2.139 ± 0.034  ops/s
-;;Records.countUniqueBikes   avgt  200  0.500 ± 0.009   s/op
+;;Result "countUniqueBikesOffHeapNth":
+;;  0.476 ±(99.9%) 0.006 s/op [Average]
+;;  (min, avg, max) = (0.428, 0.476, 0.555), stdev = 0.028
+;;  CI (99.9%): [0.469, 0.482] (assumes normal distribution)
 (defn -countUniqueBikesOffHeapNth [records]
   (let [num-records (:count (:offheap records))
         coll (:offheap records)]

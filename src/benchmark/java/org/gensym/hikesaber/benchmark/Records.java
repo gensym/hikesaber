@@ -29,7 +29,25 @@ public class Records {
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
+    public int countUniqueBikesTransduce(LoadedRecords records) {
+	return harness.countUniqueBikesTransduce(records.records);
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
     public int countUniqueBikes(LoadedRecords records) {
+	return harness.countUniqueBikes(records.records);
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public int countUniqueBikesOffHeap(LoadedRecords records) {
+	return harness.countUniqueBikesOffHeap(records.records);
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public int countUniqueBikesOffHeapNth(LoadedRecords records) {
 	return harness.countUniqueBikesOffHeapNth(records.records);
     }
 }
