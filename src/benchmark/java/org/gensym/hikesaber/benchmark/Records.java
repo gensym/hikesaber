@@ -50,4 +50,11 @@ public class Records {
     public int countUniqueBikesOffHeapNth(LoadedRecords records) {
 	return harness.countUniqueBikesOffHeapNth(records.records);
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public int countUniqueBikesOffHeapTransduce(LoadedRecords records) {
+	return harness.countUniqueBikesOffHeapTransduce(records.records);
+    }
+
 }

@@ -1,6 +1,6 @@
 (ns hikesaber.off-heap-ride-records
-  (:refer-clojure :exclude [nth])
-  (:require [hikesaber.dates :as dates]
+  (:require
+   [hikesaber.dates :as dates]
             [clojure.string :as string]
             [hikesaber.divvy-ride-records :as records]
             [hikesaber.util.integer-ids :as ids]
@@ -88,6 +88,61 @@
 (defn stoptime ^org.joda.time.DateTime [loaded-record]
   (:stoptime loaded-record))
 
+(defprotocol Disposable (dispose [this]))
+
+(defprotocol AddressableUnsafe
+  (unsafe [this])
+  (address [this]))
+
+(defprotocol RecordObject
+  (bike-id [this]))
+
+(defn unsafe-reduce
+  ([^sun.misc.Unsafe unsafe address num-records f]
+     (if (= 0 num-records)
+       (f)
+       (loop [i 1
+              offset address
+              ret (f (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))]
+         (if (= i num-records)
+           ret
+           (let [offset (+ offset object-size)
+                 ret (f ret (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))]
+             (if (reduced? ret)
+               @ret
+               (recur (inc i) offset ret)))))))
+  ([unsafe address num-records f v]
+     (loop [i 0
+            offset address
+            ret v]
+       (if (= i num-records)
+         ret
+         (let [ret (f ret (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))]
+           (if (reduced? ret)
+             @ret
+             (recur (inc i) (+ offset object-size) ret)))))))
+
+;; deftype - implement Indexed,Counted,
+(deftype RecordCollection [^sun.misc.Unsafe unsafe address num-records]
+
+  clojure.core.protocols/CollReduce
+  (coll-reduce [_ f] (unsafe-reduce unsafe address num-records f))
+  (coll-reduce [_ f v] (unsafe-reduce unsafe address num-records f v))
+
+  clojure.lang.Indexed
+  (nth [_ i] {:unsafe unsafe
+              :address (+ address (* i object-size))})
+
+  (count [_] num-records)
+
+  AddressableUnsafe
+  (unsafe [_] unsafe)
+  (address [_] address)
+
+  Disposable
+
+  (dispose [_] (.freeMemory unsafe address)))
+
 (defn make-record-collection [loaded-records]
   (let [unsafe (getUnsafe)
         num-records (count loaded-records)
@@ -99,11 +154,7 @@
              records loaded-records
              offset address]
         (if (empty? records)
-
-          {:address address
-           :count num-records
-           :unsafe unsafe
-           :destroy (fn [] (.freeMemory unsafe address))}
+          (RecordCollection. unsafe address num-records)
           (do
             (let [record (first records)]
               (try
@@ -127,10 +178,6 @@
           (throw t)))
       )))
 
-(defn destroy! [record-collection]
-  ((:destroy record-collection)))
-
-
 (defn read-record [record-collection index]
   (let [address (+ (:address record-collection) (* index object-size))
         unsafe (:unsafe record-collection)]
@@ -145,6 +192,3 @@
      }))
 
 
-(defn nth [record-collection i]
-  {:unsafe (:unsafe record-collection)
-   :address (+ (:address record-collection) (* i object-size))})
