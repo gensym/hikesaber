@@ -5,9 +5,8 @@
             [hikesaber.divvy-ride-records :as records]
             [hikesaber.util.integer-ids :as ids]
             [hikesaber.performance-tools :as perf])
-  (:import [java.io BufferedReader InputStreamReader File]
-           [java.util.zip ZipFile ZipEntry ZipInputStream]
-           [sun.misc Unsafe]))
+  (:import [sun.misc Unsafe]
+           [org.joda.time DateTime]))
 
 ;; This namespace is an implementation of the ideas in http://mechanical-sympathy.blogspot.com/2012/10/compact-off-heap-structurestuples-in.html
 
@@ -21,53 +20,53 @@
 (def user-type-offset 36)
 (def object-size 38)
 
-(defn get-trip-id [^sun.misc.Unsafe unsafe object-offset]
+(defn get-trip-id [^Unsafe unsafe object-offset]
   (.getLong unsafe (+ object-offset trip-id-offset)))
 
-(defn set-trip-id! [^sun.misc.Unsafe unsafe object-offset trip-id]
+(defn set-trip-id! [^Unsafe unsafe object-offset trip-id]
   (.putLong unsafe (+ object-offset trip-id-offset) trip-id))
 
-(defn get-from-station-id [^sun.misc.Unsafe unsafe object-offset]
+(defn get-from-station-id [^Unsafe unsafe object-offset]
   (.getInt unsafe (+ object-offset from-station-id-offset)))
 
-(defn set-from-station-id! [^sun.misc.Unsafe unsafe object-offset station-id]
+(defn set-from-station-id! [^Unsafe unsafe object-offset station-id]
   (.putInt unsafe (+ object-offset from-station-id-offset) station-id))
 
-(defn get-to-station-id [^sun.misc.Unsafe unsafe object-offset]
+(defn get-to-station-id [^Unsafe unsafe object-offset]
   (.getInt unsafe (+ object-offset to-station-id-offset)))
 
-(defn set-to-station-id! [^sun.misc.Unsafe unsafe object-offset station-id]
+(defn set-to-station-id! [^Unsafe unsafe object-offset station-id]
   (.putInt unsafe (+ object-offset to-station-id-offset) station-id))
 
 (defn get-bike-id
-  ([^sun.misc.Unsafe unsafe object-offset]
+  ([^Unsafe unsafe object-offset]
      (.getInt unsafe (+ object-offset bike-id-offset)))
   ([record]
-     (let [^sun.misc.Unsafe unsafe (:unsafe record)]
+     (let [^Unsafe unsafe (:unsafe record)]
        (.getInt unsafe (+ (:address record) bike-id-offset)))))
 
-(defn set-bike-id! [^sun.misc.Unsafe unsafe object-offset  bike-id]
+(defn set-bike-id! [^Unsafe unsafe object-offset  bike-id]
   (.putInt unsafe (+ object-offset bike-id-offset) bike-id))
 
-(defn get-start-time [^sun.misc.Unsafe unsafe object-offset]
+(defn get-start-time [^Unsafe unsafe object-offset]
   (.getLong unsafe (+ object-offset start-time-offset)))
 
-(defn set-start-time! [^sun.misc.Unsafe unsafe object-offset start-time]
+(defn set-start-time! [^Unsafe unsafe object-offset start-time]
   (.putLong unsafe (+ object-offset start-time-offset) start-time))
 
-(defn get-stop-time [^sun.misc.Unsafe unsafe object-offset]
+(defn get-stop-time [^Unsafe unsafe object-offset]
   (.getLong unsafe (+ object-offset stop-time-offset)))
 
-(defn set-stop-time! [^sun.misc.Unsafe unsafe object-offset stop-time]
+(defn set-stop-time! [^Unsafe unsafe object-offset stop-time]
   (.putLong unsafe (+ object-offset stop-time-offset) stop-time))
 
-(defn get-user-type [^sun.misc.Unsafe unsafe object-offset]
+(defn get-user-type [^Unsafe unsafe object-offset]
   (.getChar unsafe (+ object-offset user-type-offset)))
 
-(defn set-user-type! [^sun.misc.Unsafe unsafe object-offset user-type]
+(defn set-user-type! [^Unsafe unsafe object-offset user-type]
   (.putChar unsafe (+ object-offset user-type-offset) user-type))
 
-(defn- getUnsafe ^sun.misc.Unsafe []
+(defn- getUnsafe ^Unsafe []
   (let [f (.getDeclaredField Unsafe "theUnsafe")]
     (.setAccessible f true)
     (.get f nil)))
@@ -82,10 +81,10 @@
                     \M "Member"
                     \D "Dependent"})
 
-(defn starttime ^org.joda.time.DateTime [loaded-record]
+(defn starttime ^DateTime [loaded-record]
   (:starttime loaded-record))
 
-(defn stoptime ^org.joda.time.DateTime [loaded-record]
+(defn stoptime ^DateTime [loaded-record]
   (:stoptime loaded-record))
 
 (defprotocol Disposable (dispose [this]))
@@ -97,8 +96,11 @@
 (defprotocol RecordObject
   (bike-id [this]))
 
+(defn make-record-object [unsafe offset]
+  (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))
+
 (defn unsafe-reduce
-  ([^sun.misc.Unsafe unsafe address num-records f]
+  ([^Unsafe unsafe address num-records f]
      (if (= 0 num-records)
        (f)
        (loop [i 1
@@ -123,15 +125,14 @@
              (recur (inc i) (+ offset object-size) ret)))))))
 
 ;; deftype - implement Indexed,Counted,
-(deftype RecordCollection [^sun.misc.Unsafe unsafe address num-records]
+(deftype RecordCollection [^Unsafe unsafe address num-records]
 
   clojure.core.protocols/CollReduce
   (coll-reduce [_ f] (unsafe-reduce unsafe address num-records f))
   (coll-reduce [_ f v] (unsafe-reduce unsafe address num-records f v))
 
   clojure.lang.Indexed
-  (nth [_ i] {:unsafe unsafe
-              :address (+ address (* i object-size))})
+  (nth [_ i] (make-record-object unsafe (+ address (* i object-size)) ))
 
   (count [_] num-records)
 
@@ -186,7 +187,7 @@
      :from-station-id (str (get-from-station-id unsafe address))
      :to-station-id (str (get-to-station-id unsafe address))
      :bikeid (str (get-bike-id unsafe address))
-     :startime (dates/from-millis (get-start-time unsafe address))
+     :starttime (dates/from-millis (get-start-time unsafe address))
      :stoptime (dates/from-millis (get-stop-time unsafe address))
      :usertype (id->user-type (get-user-type unsafe address))
      }))
