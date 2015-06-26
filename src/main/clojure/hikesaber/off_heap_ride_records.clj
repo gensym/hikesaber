@@ -1,11 +1,13 @@
 (ns hikesaber.off-heap-ride-records
   (:require
    [hikesaber.dates :as dates]
-            [clojure.string :as string]
-            [hikesaber.divvy-ride-records :as records]
-            [hikesaber.util.integer-ids :as ids]
-            [hikesaber.performance-tools :as perf])
+   [clojure.string :as string]
+   [hikesaber.divvy-ride-records :as records]
+   [hikesaber.util.integer-ids :as ids]
+   [hikesaber.performance-tools :as perf]
+   [clojure.java.io :as io])
   (:import [sun.misc Unsafe]
+           [java.io OutputStream DataOutputStream]
            [org.joda.time DateTime]))
 
 ;; This namespace is an implementation of the ideas in http://mechanical-sympathy.blogspot.com/2012/10/compact-off-heap-structurestuples-in.html
@@ -87,6 +89,8 @@
 (defn stoptime ^DateTime [loaded-record]
   (:stoptime loaded-record))
 
+(defprotocol Serializable (serialize [this ^OutputStream output-stream]))
+
 (defprotocol Disposable (dispose [this]))
 
 (defprotocol AddressableUnsafe
@@ -124,6 +128,13 @@
              @ret
              (recur (inc i) (+ offset object-size) ret)))))))
 
+(defn serialize-bytes [^OutputStream ostream ^Unsafe unsafe address num-bytes]
+  (let [ostream (DataOutputStream. ostream)]
+    (.writeLong ostream num-bytes)
+    (dotimes [i num-bytes]
+      (.write ostream (.getByte unsafe (+ address i))))))
+
+
 ;; deftype - implement Indexed,Counted,
 (deftype RecordCollection [^Unsafe unsafe address num-records]
 
@@ -140,8 +151,11 @@
   (unsafe [_] unsafe)
   (address [_] address)
 
-  Disposable
+  Serializable
+  (serialize [this output-stream]
+    (serialize-bytes output-stream unsafe address (* num-records object-size)))
 
+  Disposable
   (dispose [_] (.freeMemory unsafe address)))
 
 (defn make-record-collection [loaded-records]
@@ -192,4 +206,6 @@
      :usertype (id->user-type (get-user-type unsafe address))
      }))
 
-
+(defn to-file [record-collection filename]
+  (with-open [w (io/output-stream (io/file filename))]
+    (serialize record-collection w)))
