@@ -49,15 +49,15 @@
 
 
 ;;Result "countUniqueBikesOffHeap":
-;;  0.273 ±(99.9%) 0.005 s/op [Average]
-;;  (min, avg, max) = (0.253, 0.273, 0.337), stdev = 0.020
-;;  CI (99.9%): [0.268, 0.278] (assumes normal distribution)
+;;  0.313 ±(99.9%) 0.004 s/op [Average]
+;;  (min, avg, max) = (0.263, 0.313, 0.342), stdev = 0.017
+;;  CI (99.9%): [0.309, 0.317] (assumes normal distribution)
 (defn -countUniqueBikesOffHeap [records]
   (let [num-records (count (:offheap records))
         unsafe (ohr/unsafe (:offheap records))
         s ohr/object-size]
     (loop [i 0
-           offset (ohr/address (:offheap records))
+           offset 0
            ids #{}]
       (if (= i num-records)
         (count ids)
@@ -66,11 +66,10 @@
                (conj ids (ohr/get-bike-id unsafe offset)))))))
 
 
-
 ;;Result "countUniqueBikesOffHeapNth":
-;;  0.404 ±(99.9%) 0.006 s/op [Average]
-;;  (min, avg, max) = (0.372, 0.404, 0.474), stdev = 0.026
-;;  CI (99.9%): [0.398, 0.410] (assumes normal distribution)
+;;  0.310 ±(99.9%) 0.005 s/op [Average]
+;;  (min, avg, max) = (0.278, 0.310, 0.388), stdev = 0.021
+;;  CI (99.9%): [0.305, 0.315] (assumes normal distribution)
 (defn -countUniqueBikesOffHeapNth [records]
   (let [num-records (count (:offheap records))
         coll (:offheap records)]
@@ -80,12 +79,13 @@
         (count ids)
         (let [record (nth coll i)]
           (recur (inc i)
-                 (conj ids (ohr/get-bike-id record))))))))
+                 (conj ids (ohr/bike-id record))))))))
+
 
 
 ;;Result "countUniqueBikesOffHeapTransduce":
-;;  0.307 ±(99.9%) 0.006 s/op [Average]
-;;  (min, avg, max) = (0.274, 0.307, 0.370), stdev = 0.026
-;;  CI (99.9%): [0.301, 0.313] (assumes normal distribution)
+;;  0.346 ±(99.9%) 0.008 s/op [Average]
+;;  (min, avg, max) = (0.280, 0.346, 0.404), stdev = 0.033
+;;  CI (99.9%): [0.338, 0.353] (assumes normal distribution)
 (defn -countUniqueBikesOffHeapTransduce [records]
   (count (transduce (map ohr/bike-id) conj #{} (:offheap records))))
