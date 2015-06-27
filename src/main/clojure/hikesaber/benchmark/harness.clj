@@ -80,7 +80,7 @@
         (count ids)
         (let [record (nth coll i)]
           (recur (inc i)
-                 (conj ids (ohr/get-bike-id record))))))))
+                 (conj ids (ohr/bike-id record))))))))
 
 
 ;;Result "countUniqueBikesOffHeapTransduce":
