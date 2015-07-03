@@ -23,3 +23,12 @@
 (deftest should-transduce
   (let [records (r/make-record-collection (map (fn [x] (assoc (make-record) :bikeid (str x)) )  (range 12)))]
     (is (= (into #{} (range 12)) (transduce (map r/bike-id) conj #{} records)))))
+
+(deftest should-get-by-keyword
+  (let [records (r/make-record-collection [(assoc (make-record) :bikeid "123")])]
+    (is (= 123 (:bikeid (nth records 0))))))
+
+
+(deftest should-get-default-by-keyword
+  (let [records (r/make-record-collection [(assoc (make-record) :bikeid "123")])]
+    (is (= "foo" (get (nth records 0) :notfound "foo")))))
