@@ -27,6 +27,12 @@
                           :java-source-paths ["src/main/java" "src/benchmark/java"]
                           :prep-tasks [["compile" "hikesaber.benchmark.harness"] "javac" "compile"]}
              :uberjar {:aot :all}}
+  :aliases {
+            "make-record-cache"
+            ["trampoline" "run" "-m" "hikesaber.record-cache/make-cache"]
+
+            "clean-record-cache"
+            ["trampoline" "run" "-m" "hikesaber.record-cache/clean-cache"]}
 
   :main ^:skip-aot hikesaber.core
   :target-path "target/%s"

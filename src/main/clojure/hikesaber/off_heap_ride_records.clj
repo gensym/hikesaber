@@ -7,7 +7,7 @@
    [hikesaber.performance-tools :as perf]
    [clojure.java.io :as io])
   (:import [sun.misc Unsafe]
-           [java.io OutputStream DataOutputStream]
+           [java.io InputStream OutputStream DataInputStream DataOutputStream]
            [org.joda.time DateTime]))
 
 ;; This namespace is an implementation of the ideas in http://mechanical-sympathy.blogspot.com/2012/10/compact-off-heap-structurestuples-in.html
@@ -158,6 +158,21 @@
   Disposable
   (dispose [_] (.freeMemory unsafe address)))
 
+(defn deserialize-bytes [^InputStream istream ^Unsafe unsafe]
+  (let [istream (DataInputStream. istream)
+        num-bytes (.readLong istream)
+        address (.allocateMemory unsafe num-bytes)]
+    (try
+      (do
+        (dotimes [i num-bytes]
+          (.putInt unsafe (+ address i) (.read istream)))
+        (RecordCollection. unsafe address (/ num-bytes object-size)))
+      (catch Throwable t
+        (do
+          (.freeMemory unsafe address)
+          (throw t))))))
+
+
 (defn make-record-collection [loaded-records]
   (let [unsafe (getUnsafe)
         num-records (count loaded-records)
@@ -206,6 +221,5 @@
      :usertype (id->user-type (get-user-type unsafe address))
      }))
 
-(defn to-file [record-collection filename]
-  (with-open [w (io/output-stream (io/file filename))]
-    (serialize record-collection w)))
+(defn deserialize [input-stream]
+  (deserialize-bytes input-stream (getUnsafe)))
