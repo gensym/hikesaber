@@ -57,4 +57,10 @@ public class Records {
 	return harness.countUniqueBikesOffHeapTransduce(records.records);
     }
 
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public int countUniqueBikesOffHeapTransduceKeyword(LoadedRecords records) {
+	return harness.countUniqueBikesOffHeapTransduceKeyword(records.records);
+    }
+
 }

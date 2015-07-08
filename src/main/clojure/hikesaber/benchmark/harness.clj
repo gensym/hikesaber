@@ -6,6 +6,7 @@
             #^{:static true} [countUniqueBikesOffHeap [Object] int]
              #^{:static true} [countUniqueBikesOffHeapNth [Object] int]
              #^{:static true} [countUniqueBikesOffHeapTransduce [Object] int]
+             #^{:static true} [countUniqueBikesOffHeapTransduceKeyword [Object] int]
              #^{:static true} [loadRecords [] Object]
              #^{:static true} [unloadRecords [Object] Object]
              ])
@@ -91,3 +92,6 @@
 ;;  CI (99.9%): [0.308, 0.321] (assumes normal distribution)
 (defn -countUniqueBikesOffHeapTransduce [records]
   (count (transduce (map ohr/bike-id) conj #{} (:offheap records))))
+
+(defn -countUniqueBikesOffHeapTransduceKeyword [records]
+  (count (transduce (map :bikeid) conj #{} (:offheap records))))
