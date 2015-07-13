@@ -97,7 +97,18 @@
   (bike-id [this]))
 
 (defn make-record-object [unsafe offset]
-  (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))
+  (reify
+
+    RecordObject
+    (bike-id [_] (get-bike-id unsafe offset))
+
+    clojure.lang.ILookup
+
+    (valAt [this key not-found]
+      (case key
+        :bikeid (get-bike-id unsafe offset) not-found))
+    
+    (valAt [this key] (.valAt this key nil))))
 
 (defn unsafe-reduce
   ([^Unsafe unsafe address num-records f]
@@ -105,11 +116,11 @@
        (f)
        (loop [i 1
               offset address
-              ret (f (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))]
+              ret (f (make-record-object unsafe offset))]
          (if (= i num-records)
            ret
            (let [offset (+ offset object-size)
-                 ret (f ret (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))]
+                 ret (f ret (make-record-object unsafe offset))]
              (if (reduced? ret)
                @ret
                (recur (inc i) offset ret)))))))
@@ -119,7 +130,7 @@
             ret v]
        (if (= i num-records)
          ret
-         (let [ret (f ret (reify RecordObject (bike-id [_] (get-bike-id unsafe offset))))]
+         (let [ret (f ret (make-record-object unsafe offset))]
            (if (reduced? ret)
              @ret
              (recur (inc i) (+ offset object-size) ret)))))))
