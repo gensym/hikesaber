@@ -1,8 +1,8 @@
-(ns hikesaber.off-heap-ride-records
+(ns hikesaber.ride-records.off-heap-ride-records
   (:require
    [hikesaber.dates :as dates]
    [clojure.string :as string]
-   [hikesaber.divvy-ride-records :as records]
+   [hikesaber.ride-records.divvy-ride-records :as records]
    [hikesaber.util.integer-ids :as ids]
    [hikesaber.performance-tools :as perf])
   (:import [sun.misc Unsafe]

@@ -1,4 +1,4 @@
-(ns hikesaber.divvy-ride-records
+(ns hikesaber.ride-records.divvy-ride-records
   (:require  [hikesaber.dates :as dates]
              [clojure.string :as string]
              [hikesaber.performance-tools :as perf])

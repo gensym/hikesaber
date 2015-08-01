@@ -10,8 +10,8 @@
              #^{:static true} [loadRecords [] Object]
              #^{:static true} [unloadRecords [Object] Object]
              ])
-  (:require [hikesaber.divvy-ride-records :as records]
-            [hikesaber.off-heap-ride-records :as ohr]))
+  (:require [hikesaber.ride-records.divvy-ride-records :as records]
+            [hikesaber.ride-records.off-heap-ride-records :as ohr]))
 
 ;; This can be helpful
 (comment (set! *warn-on-reflection* true))

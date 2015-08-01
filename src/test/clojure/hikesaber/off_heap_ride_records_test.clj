@@ -1,7 +1,7 @@
 (ns hikesaber.off-heap-ride-records-test
   (:import [org.joda.time DateTime])
   (:require [clojure.test :refer :all]
-            [hikesaber.off-heap-ride-records :as r]))
+            [hikesaber.ride-records.off-heap-ride-records :as r]))
 
 (defn- make-record []
   {:trip-id "1"

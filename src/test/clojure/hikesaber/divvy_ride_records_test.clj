@@ -1,7 +1,7 @@
 (ns hikesaber.divvy-ride-records-test
   (:import [org.joda.time DateTime])
   (:require [clojure.test :refer :all]
-            [hikesaber.divvy-ride-records :as d]))
+            [hikesaber.ride-records.divvy-ride-records :as d]))
 
 (deftest should-add-weekday-annotation-from-starttime
   (let [record {:starttime (DateTime. 2014 6 30 23 57)}]

@@ -1,5 +1,5 @@
 (ns hikesaber.divvy-ride-statistics
-  (:require [hikesaber.divvy-ride-records :as records]
+  (:require [hikesaber.ride-records.divvy-ride-records :as records]
             [hikesaber.dates :as dates]
             [clojure.core.reducers :as r]))
 
