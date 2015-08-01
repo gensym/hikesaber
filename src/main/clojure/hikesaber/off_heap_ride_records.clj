@@ -1,10 +1,10 @@
 (ns hikesaber.off-heap-ride-records
   (:require
    [hikesaber.dates :as dates]
-            [clojure.string :as string]
-            [hikesaber.divvy-ride-records :as records]
-            [hikesaber.util.integer-ids :as ids]
-            [hikesaber.performance-tools :as perf])
+   [clojure.string :as string]
+   [hikesaber.divvy-ride-records :as records]
+   [hikesaber.util.integer-ids :as ids]
+   [hikesaber.performance-tools :as perf])
   (:import [sun.misc Unsafe]
            [org.joda.time DateTime]))
 
@@ -106,7 +106,10 @@
 
     (valAt [this key not-found]
       (case key
-        :bikeid (get-bike-id unsafe offset) not-found))
+        :bikeid (get-bike-id unsafe offset) 
+        :starttime (get-start-time unsafe offset)
+        :stoptime (get-stop-time unsafe offset)
+        not-found))
     
     (valAt [this key] (.valAt this key nil))))
 

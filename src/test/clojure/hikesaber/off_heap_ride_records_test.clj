@@ -28,6 +28,13 @@
   (let [records (r/make-record-collection [(assoc (make-record) :bikeid "123")])]
     (is (= 123 (:bikeid (nth records 0))))))
 
+(deftest should-get-starttime-by-keyword
+  (let [records (r/make-record-collection [(assoc (make-record) :starttime (DateTime. 2014 6 30 23 57))])]
+    (is (= 1404190620000 (:starttime (nth records 0))))))
+
+(deftest should-get-stoptime-by-keyword
+    (let [records (r/make-record-collection [(assoc (make-record) :stoptime (DateTime. 2014 6 30 23 57))])]
+    (is (= 1404190620000 (:stoptime (nth records 0)))))  )
 
 (deftest should-get-default-by-keyword
   (let [records (r/make-record-collection [(assoc (make-record) :bikeid "123")])]
