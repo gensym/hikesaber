@@ -36,6 +36,7 @@
   (comp/routes
    (route/resources "/")
    (comp/GET "/" [] (resp/resource-response "index.html" {:root "public"}))
+   (comp/GET "/usage_by_time_of_day.json" [] (resp/resource-response "data.json" {:root "public"}))
    (comp/GET "/time-of-day-counts.json" {{weekend? :weekend} :params}
              (json-response
               (rides-by-time-of-day loaded-records (read-string (or weekend? "false")))))
