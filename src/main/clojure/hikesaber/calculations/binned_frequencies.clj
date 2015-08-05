@@ -18,7 +18,7 @@
     (inc-in binner [:bins bin-key group-key])))
 
 (defn bins [binner]
-  (into {} (map (fn [[bin groups]] [bin (map (fn [[_ x]] x) groups)]) (:bins binner))))
+  (into {} (map (fn [[bin groups]] [bin (map (fn [[_ x]] x) (sort groups))]) (:bins binner))))
 
 (defn + [binner-1 binner-2]
   "Combine 2 binners. Those binners must be rooted in the same create call"

@@ -38,3 +38,19 @@
         b2 (b/add root 35)]
     (is (= {5 [1, 1]} (b/bins (b/+ b1 b2))))))
 
+(deftest combining-binners-should-include-all-bins []
+    (let [root (integer-binner 10)
+        b1 (b/add root 45)
+        b2 (b/add root 46)]
+    (is (= {6 [1] 5 [1]} (b/bins (b/+ b1 b2))))))
+
+(deftest combining-binners-should-add-groups []
+    (let [root (integer-binner 10)
+        b1 (b/add root 45)
+        b2 (b/add root 45)]
+    (is (= {5 [2]} (b/bins (b/+ b1 b2))))))
+
+
+
+
+
