@@ -6,10 +6,10 @@
    [hikesaber.util.integer-ids :as ids]
    [hikesaber.performance-tools :as perf])
   (:import [sun.misc Unsafe]
+           [java.io InputStream OutputStream DataInputStream DataOutputStream]
            [org.joda.time DateTime]))
 
 ;; This namespace is an implementation of the ideas in http://mechanical-sympathy.blogspot.com/2012/10/compact-off-heap-structurestuples-in.html
-
 
 (def trip-id-offset 0)
 (def from-station-id-offset 8)
@@ -87,6 +87,8 @@
 (defn stoptime ^DateTime [loaded-record]
   (:stoptime loaded-record))
 
+(defprotocol Serializable (serialize [this ^OutputStream output-stream]))
+
 (defprotocol Disposable (dispose [this]))
 
 (defprotocol AddressableUnsafe
@@ -110,7 +112,6 @@
         :starttime (get-start-time unsafe offset)
         :stoptime (get-stop-time unsafe offset)
         not-found))
-    
     (valAt [this key] (.valAt this key nil))))
 
 (defn unsafe-reduce
@@ -138,6 +139,13 @@
              @ret
              (recur (inc i) (+ offset object-size) ret)))))))
 
+(defn serialize-bytes [^OutputStream ostream ^Unsafe unsafe address num-bytes]
+  (let [ostream (DataOutputStream. ostream)]
+    (.writeLong ostream num-bytes)
+    (dotimes [i num-bytes]
+      (.write ostream (.getByte unsafe (+ address i))))))
+
+
 ;; deftype - implement Indexed,Counted,
 (deftype RecordCollection [^Unsafe unsafe address num-records]
 
@@ -154,9 +162,27 @@
   (unsafe [_] unsafe)
   (address [_] address)
 
-  Disposable
+  Serializable
+  (serialize [this output-stream]
+    (serialize-bytes output-stream unsafe address (* num-records object-size)))
 
+  Disposable
   (dispose [_] (.freeMemory unsafe address)))
+
+(defn deserialize-bytes [^InputStream istream ^Unsafe unsafe]
+  (let [istream (DataInputStream. istream)
+        num-bytes (.readLong istream)
+        address (.allocateMemory unsafe num-bytes)]
+    (try
+      (do
+        (dotimes [i num-bytes]
+          (.putInt unsafe (+ address i) (.read istream)))
+        (RecordCollection. unsafe address (/ num-bytes object-size)))
+      (catch Throwable t
+        (do
+          (.freeMemory unsafe address)
+          (throw t))))))
+
 
 (defn make-record-collection [loaded-records]
   (let [unsafe (getUnsafe)
@@ -206,4 +232,5 @@
      :usertype (id->user-type (get-user-type unsafe address))
      }))
 
-
+(defn deserialize [input-stream]
+  (deserialize-bytes input-stream (getUnsafe)))
