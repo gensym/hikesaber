@@ -1,7 +1,7 @@
 (ns hikesaber.record-cache
   (:require [clojure.java.io :as io]
-            [hikesaber.off-heap-ride-records :as ohr]
-            [hikesaber.divvy-ride-records :as records]))
+            [hikesaber.ride-records.off-heap-ride-records :as ohr]
+            [hikesaber.ride-records.divvy-ride-records :as records]))
 
 (defn load-cached-records []
   (if-let [dir-rs (io/resource "data")]
