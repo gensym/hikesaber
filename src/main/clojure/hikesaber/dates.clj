@@ -1,9 +1,11 @@
 (ns hikesaber.dates
   (:require [clojure.core.memoize :as memo]
             [clj-time.core :as t]
+            [clj-time.coerce :as tc]
             [clj-time.predicates :as tp]
             [clj-time.format :as tf])
-  (:import [org.joda.time DateTime]))
+  (:import [java.util Date]
+           [org.joda.time DateTime]))
 
 (def month-year-formatter (tf/formatter "M/d/yyyy"))
 (def time-formatter (tf/formatter "M/d/yyyy H:m"))
@@ -36,8 +38,19 @@
   (->> timestr
        (tf/parse legacy-time-formatter)))
 
-(defn from-millis [millis]
-  (DateTime. millis))
+(defn to-date-time [inst]
+  (tc/from-date inst))
+
+(defn minute-bucket [num-minutes ^DateTime date-time]
+  (let [hour (.getHourOfDay date-time)
+        minutes  (* num-minutes (quot (.getMinuteOfHour date-time) num-minutes))]
+    (.withTime date-time hour minutes 0 0)))
+
+(defn start-of-day [^DateTime date-time]
+  (.withTimeAtStartOfDay date-time))
+
+(defn from-millis [^long millis]
+  (Date. millis))
 
 (defn weekday? [datetime]
   (tp/weekday? datetime))
@@ -45,7 +58,7 @@
 (defn to-datetime [timestr]
   (memo-parse timestr))
 
-(defn month-year [datetime]
+(defn month-year [^DateTime datetime]
   (.withTimeAtStartOfDay (.withDayOfMonth datetime 1)))
 
 (defn day-month-year [datetime]
