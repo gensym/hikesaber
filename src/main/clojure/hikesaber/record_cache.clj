@@ -10,7 +10,7 @@
       (if (.exists file)
         (with-open [r (io/input-stream file)]
           (ohr/deserialize r ))
-        (let [record-collection (ohr/make-record-collection records/loaded)]
+        (let [record-collection (ohr/make-record-collection (records/load-from-files))]
           (with-open [w (io/output-stream file)]
             (ohr/serialize record-collection w)
             record-collection))))

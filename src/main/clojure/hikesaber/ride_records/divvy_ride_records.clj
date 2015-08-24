@@ -14,17 +14,22 @@
    :usertype (fn [v] [:usertype (get {"Subscriber" "Member"} v v)])})
 
 (def data-files
-  [
-   ["datachallenge/Divvy_Stations_Trips_2013/Divvy_Trips_2013.csv"
-    (merge default-masseuse
-           {:stoptime (fn [v] [:stoptime (dates/from-2013-time-format v)])
-            :starttime (fn [v] [:starttime (dates/from-2013-time-format v)])
-            :birthday (fn [v] [:birthyear v])})]
+  {(clojure.java.io/resource "data/datachallenge.zip") 
+   [
+    ["datachallenge/Divvy_Stations_Trips_2013/Divvy_Trips_2013.csv"
+     (merge default-masseuse
+            {:stoptime (fn [v] [:stoptime (dates/from-2013-time-format v)])
+             :starttime (fn [v] [:starttime (dates/from-2013-time-format v)])
+             :birthday (fn [v] [:birthyear v])})]
 
-   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q1Q2/Divvy_Trips_2014_Q1Q2.csv" default-masseuse]
-   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-07.csv"  default-masseuse]
-   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-0809.csv" default-masseuse]
-   ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q4.csv" default-masseuse]])
+    ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q1Q2/Divvy_Trips_2014_Q1Q2.csv" default-masseuse]
+    ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-07.csv"  default-masseuse]
+    ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q3-0809.csv" default-masseuse]
+    ["datachallenge/Divvy_Stations_Trips_2014/Divvy_Stations_Trips_2014_Q3Q4/Divvy_Trips_2014-Q4.csv" default-masseuse]]
+
+   (clojure.java.io/resource "data/Divvy_Trips_2015-Q1Q2.zip")
+   [["Divvy_Trips_2015-Q1.csv" default-masseuse]
+    ["Divvy_Trips_2015-Q2.csv" default-masseuse]]})
 
 ;; These are properties that are known to have a finite set of values.
 ;; Be specifiying them, we can potentially decrease the memory footprint
@@ -113,15 +118,14 @@
          ride-entries)))
 
 (defn load-from-files []
-  (let [fileseqs (from-resource datafile)]
-    (mapcat (fn [[filename data-mappings]]
-              (->> filename
-                   fileseqs
-                   (to-map-seq)
-                   (map #(massage-record (merge
-                                          repeated-string-properties-masseuses
-                                          data-mappings) %))))
-            data-files)))
-
-;; Create static definition so that other namespaces don't need to reload them with every compile
-(def loaded (load-from-files))
+  (mapcat (fn [[datafile internal-files]]
+            (let [fileseqs (from-resource datafile)]
+              (mapcat (fn [[filename data-mappings]]
+                        (->> filename
+                             fileseqs
+                             (to-map-seq)
+                             (map #(massage-record (merge
+                                                    repeated-string-properties-masseuses
+                                                    data-mappings) %))))
+                      internal-files)))
+          data-files))
