@@ -13,7 +13,8 @@
                           (b/create (partial d/minute-bucket 15)
                                     (partial d/start-of-day))
                           records)]
-    (map (fn [[k v]]
-           {:time k
-            :percentiles (freq/percentiles [0.05 0.25 0.50 0.75 0.95] v)})
+        (map (fn [[bin count-by-date]]
+               {:time (d/to-hour-minute-string bin)
+                :percentiles (freq/percentiles [0.05 0.25 0.50 0.75 0.95] (vals count-by-date))})
          (:bins binned))))
+

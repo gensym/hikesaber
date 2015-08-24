@@ -29,6 +29,15 @@
 
 (def to-day-string (memo/lru (fn [d] (tf/unparse day-formatter d))
                              :lru/threshold 10))
+(let [hour-strings (vec (concat (map #(str "0" %1) (range 10)) (map str (range 10 24))))
+      minute-strings  (vec (concat (map #(str "0" %1) (range 10)) (map str (range 10 60))))]
+  (def to-hour-minute-string (memo/lru (fn [minutes-of-day]
+                                         (let [hour (quot minutes-of-day 60)
+                                               minute (rem minutes-of-day 60)]
+                                           (str (nth hour-strings hour)
+                                                ":"
+                                                (nth minute-strings minute))))
+                                       :lru/threshold 10)))
 
 (defn from-2014-time-format [timestr]
   (->> timestr
@@ -44,7 +53,7 @@
 (defn minute-bucket [num-minutes ^DateTime date-time]
   (let [hour (.getHourOfDay date-time)
         minutes  (* num-minutes (quot (.getMinuteOfHour date-time) num-minutes))]
-    (.withTime date-time hour minutes 0 0)))
+    (+ (* 60 hour) minutes)))
 
 (defn start-of-day [^DateTime date-time]
   (.withTimeAtStartOfDay date-time))
@@ -60,6 +69,7 @@
 
 (defn month-year [^DateTime datetime]
   (.withTimeAtStartOfDay (.withDayOfMonth datetime 1)))
+
 
 (defn day-month-year [datetime]
   {:day (to-day-string datetime)
