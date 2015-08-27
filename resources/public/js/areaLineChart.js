@@ -189,11 +189,11 @@ function makeAreaLineChart(selector, dataPath) {
 	    var data = rawData.map(function (d) {
 		return {
 		    time:  timeFormat.parse(d.time).valueOf(),
-		    pct05: d.pct05,
-		    pct25: d.pct25,
-		    pct50: d.pct50,
-		    pct75: d.pct75,
-		    pct95: d.pct95
+		    pct05: d.percentiles["0.05"],
+		    pct25: d.percentiles["0.25"],
+		    pct50: d.percentiles["0.50"],
+		    pct75: d.percentiles["0.75"],
+		    pct95: d.percentiles["0.95"]
 		};
 	    });
 

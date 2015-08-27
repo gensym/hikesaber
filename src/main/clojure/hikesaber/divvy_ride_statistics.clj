@@ -3,8 +3,6 @@
             [hikesaber.dates :as dates]
             [clojure.core.reducers :as r]))
 
-(def loaded-records records/loaded)
-
 (defn count-by [f loaded-records]
   (let [produce-count (fn
                         ([] {})

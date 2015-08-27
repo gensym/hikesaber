@@ -8,8 +8,6 @@
             [clojure.data.json :as json]
             [hikesaber.divvy-ride-statistics :as divvy]))
 
-(def loaded-records divvy/loaded-records)
-
 (def rides-by-time-of-day
   (memo/lru
    (fn [loaded-records weekend?]
@@ -32,17 +30,18 @@
    :headers {"Content-Type" "application/json"}
    :body (json/write-str data)})
 
-(defn make-routes [loaded-records]
+(defn make-routes []
   (comp/routes
    (route/resources "/")
    (comp/GET "/" [] (resp/resource-response "index.html" {:root "public"}))
    (comp/GET "/usage_by_time_of_day.json" [] (resp/resource-response "data.json" {:root "public"}))
-   (comp/GET "/time-of-day-counts.json" {{weekend? :weekend} :params}
-             (json-response
-              (rides-by-time-of-day loaded-records (read-string (or weekend? "false")))))
-   (comp/GET "/monthly-counts.json" req (json-response (rides-by-month loaded-records)))
+   (comment
+     (comp/GET "/time-of-day-counts.json" {{weekend? :weekend} :params}
+               (json-response
+                (rides-by-time-of-day loaded-records (read-string (or weekend? "false")))))
+     (comp/GET "/monthly-counts.json" req (json-response (rides-by-month loaded-records))))
    (comp/GET "/ping" req {:status 200 :headers {"Content-Type" "text/html"} :body "hello"})
    (route/not-found "<p>Page not found.</p>")))
 
-(defn start [loaded-records]
-  (hs/run-server (handler/site (make-routes loaded-records)) {:port 8080}))
+(defn start []
+  (hs/run-server (handler/site (make-routes)) {:port 8080}))
