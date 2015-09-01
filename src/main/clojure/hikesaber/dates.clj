@@ -8,8 +8,8 @@
            [org.joda.time DateTime]))
 
 (def month-year-formatter (tf/formatter "M/d/yyyy"))
-(def time-formatter (tf/formatter "M/d/yyyy H:m"))
-(def legacy-time-formatter (tf/formatter "yyyy-M-d H:m"))
+(def time-formatter (tf/formatter "M/d/yyyy H:m ZZZ"))
+(def legacy-time-formatter (tf/formatter "yyyy-M-d H:m ZZZ"))
 
 (def day-formatter (tf/formatter "d"))
 (def month-formatter (tf/formatter "MM"))
@@ -40,11 +40,11 @@
                                        :lru/threshold 10)))
 
 (defn from-2014-time-format [timestr]
-  (->> timestr
+  (->> (str timestr " America/Chicago")
        (tf/parse time-formatter)))
 
 (defn from-2013-time-format [timestr]
-  (->> timestr
+  (->> (str timestr " America/Chicago")
        (tf/parse legacy-time-formatter)))
 
 (defn to-date-time [inst]
