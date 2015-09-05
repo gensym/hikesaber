@@ -22,9 +22,10 @@
    :lru/threshold 10))
 
 (def usage-by-time-of-day
-  (fn [loaded-records]
-    (pres/usage-by-time-json
-     (usage/weekday-usage-by-time-of-day loaded-records))))
+  (memo/lru
+   (fn [loaded-records]
+     (pres/usage-by-time-json
+      (usage/weekday-usage-by-time-of-day loaded-records)))))
 
 (def rides-by-month
   (memo/lru

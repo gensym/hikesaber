@@ -3,22 +3,49 @@
     <meta charset="utf-8">
     <title>Usage By Time of Day</title>
     <script type="text/javascript" src="js/jquery/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="js/usage_by_time_of_day.js"></script>
+    <script type="text/javascript" src="js/underscore/underscore-min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
 
 
     <script type="text/javascript" src="js/d3/d3.min.js"></script>
     <script type="text/javascript" src="js/areaLineChart.js"></script>
 
+    <form>
+      <input type="checkbox" name="daytype" id="include_weekend" value="weekend">
+      <label for="include_weekend">Weekend</label>
+      <input type="checkbox" name="daytype" id="include_weekday" value="weekday">
+      <label for="include_weekday">Weekday</label>
+
+      <button id="submit">Submit</button>
+    </form>
+
     <script type="text/javascript">
+
+
       $(function() {
-         var areaChart = makeAreaLineChart('body', '/usage_by_time_of_day.json');
-         areaChart();
+
+      ensureAtLeastOneSelected(['#include_weekend', '#include_weekday']);
+
+      var chart;
+
+      $("#submit").click(function() {
+         if (chart !== undefined) {
+            destroyAreaLineChart(chart);
+         }
+
+         var dataUrl = '/usage_by_time_of_day.json?' +
+                       $.param({weekend: isChecked('#include_weekend'),
+                                weekday: isChecked('#include_weekday')});
+         chart = makeAreaLineChart('body', dataUrl);
+         chart();
+         return false;
+      });
+
       });
     </script>
 
   </head>
-
-
 
   <body>
   </body>

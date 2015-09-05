@@ -1,6 +1,9 @@
 // selector - any d3 selector (https://github.com/mbostock/d3/wiki/Selections)
 // dataPath
 function makeAreaLineChart(selector, dataPath) {
+
+    var svgId =  '_' + Math.random().toString(36).substr(2, 9);
+
     var timeFormat = d3.time.format('%H:%M');
 
     function addAxesAndLegend (svg, xAxis, yAxis, margin, chartWidth, chartHeight) {
@@ -22,20 +25,23 @@ function makeAreaLineChart(selector, dataPath) {
 	var axes = svg.append('g')
 	    .attr('clip-path', 'url(#axes-clip)');
 
+
 	axes.append('g')
-	    .attr('class', 'x axis')
-	    .attr('transform', 'translate(0,' + chartHeight + ')')
+	    .attr('class', 'x axis xaxis')
+	    .attr('transform', 'translate(0,' + (chartHeight) + ')')
 	    .call(xAxis);
+
+
+	axes.selectAll(".xaxis text")
+	    .attr("transform", function(d) {
+		return "translate(" +
+		    this.getBBox().height*-2 + "," +
+		    this.getBBox().height +")rotate(-45)";
+	    });
 
 	axes.append('g')
 	    .attr('class', 'y axis')
-	    .call(yAxis)
-	    .append('text')
-	    .attr('transform', 'rotate(-90)')
-	    .attr('y', 6)
-	    .attr('dy', '.71em')
-	    .style('text-anchor', 'end')
-	    .text('Time (s)');
+	    .call(yAxis);
 
 	var legend = svg.append('g')
 	    .attr('class', 'legend')
@@ -146,10 +152,20 @@ function makeAreaLineChart(selector, dataPath) {
 	chartWidth  = svgWidth  - margin.left - margin.right,
 	chartHeight = svgHeight - margin.top  - margin.bottom;
 
-	var x = d3.scale.linear().range([0, chartWidth])
+	var x = d3.scale
+	    .linear()
+	    .range([0, chartWidth])
             .domain(d3.extent(data, function (d) { return d.time; })),
 	y = d3.scale.linear().range([chartHeight, 0])
             .domain([0, d3.max(data, function (d) { return d.pct95; })]);
+
+	var xTicks = [];
+	for (i = 0; i < data.length; i++) {
+
+	    if (i % 4 == 0) {
+		xTicks.push(data[i].time);
+	    }
+	}
 
 	var xAxis = d3.svg.axis()
 	    .scale(x)
@@ -158,17 +174,24 @@ function makeAreaLineChart(selector, dataPath) {
 	    })
 	    .orient('bottom')
             .innerTickSize(-chartHeight)
-	    .outerTickSize(0)
+//	    .outerTickSize(0)
+	    .tickValues(xTicks)
 	    .tickPadding(10);
+
+
 
 	var yAxis = d3.svg.axis()
 	    .scale(y)
+	    .tickFormat(function(y) {
+		return y * 4; // our data is in 15 minute increments, but we want to display as hourly rate
+	    })
 	    .orient('left')
             .innerTickSize(-chartWidth)
 	    .outerTickSize(0)
 	    .tickPadding(10);
 
 	var svg = d3.select(selector).append('svg')
+	    .attr('id', svgId)
 	    .attr('width',  svgWidth)
 	    .attr('height', svgHeight)
 	    .append('g')
@@ -179,13 +202,12 @@ function makeAreaLineChart(selector, dataPath) {
 	drawPaths(svg, data, x, y);
     }
 
-    return function() {
+    var ret =  function() {
 	d3.json(dataPath, function (error, rawData) {
 	    if (error) {
 		console.error(error);
 		return;
 	    }
-
 	    var data = rawData.map(function (d) {
 		return {
 		    time:  timeFormat.parse(d.time).valueOf(),
@@ -201,5 +223,13 @@ function makeAreaLineChart(selector, dataPath) {
 
 	});
     };
+    ret.destroy = function() {
+	d3.select("#" + svgId).remove();
+    }
+    return ret;
+}
+
+function destroyAreaLineChart(chart) {
+    chart.destroy();
 }
 
