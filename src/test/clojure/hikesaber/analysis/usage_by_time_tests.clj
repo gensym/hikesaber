@@ -5,6 +5,8 @@
   (:import [org.joda.time DateTime]))
 
 (defn- make-record [day hour minute]
+
+  ;; Jan 1, 2014 was a Wednesday
   (let [start (-> (DateTime. 2014 01 01 00 00)
                   (.plusDays day)
                   (.plusHours hour)
@@ -29,8 +31,29 @@
     (let [records (r/make-record-collection [])]
       (is (= [] (u/weekday-usage-by-time-of-day records)))))
 
-  (testing "one should be returned as itself"
+  (testing "should include weekeday by default"
     (let [records (r/make-record-collection [(make-record 0 1 30)])
+          actual (u/weekday-usage-by-time-of-day records)
+          expected [{:time "01:30"
+                     :percentiles {0.05 1
+                                   0.25 1
+                                   0.50 1
+                                   0.75 1
+                                   0.95 1}}]]
+      (is (= expected actual))))
+
+  (testing "should exclude weekday when specified"
+    (let [records (r/make-record-collection [(make-record 0 1 30)])
+          actual (u/weekday-usage-by-time-of-day records {:include-weekdays false})]
+      (is (= [] actual))))
+
+  (testing "should exclude weekend when specified"
+    (let [records (r/make-record-collection [(make-record 3 1 30)])
+          actual (u/weekday-usage-by-time-of-day records {:include-weekend false})]
+      (is (= [] actual))))
+
+  (testing "should include weekend by default"
+    (let [records (r/make-record-collection [(make-record 3 1 30)])
           actual (u/weekday-usage-by-time-of-day records)
           expected [{:time "01:30"
                      :percentiles {0.05 1
@@ -109,6 +132,6 @@
                           (make-records 1 45 75 20 21))
 
           records (r/make-record-collection records)
-          actual (u/weekday-usage-by-time-of-day records)]
+          actual (u/weekday-usage-by-time-of-day records {:include-weekend false})]
       (is (= expected actual)))))
 

@@ -14,7 +14,6 @@
 (defn load-records []
   (cache/load-cached-records))
 
-
 (def rides-by-time-of-day
   (memo/lru
    (fn [loaded-records weekend?]
@@ -23,9 +22,11 @@
 
 (def usage-by-time-of-day
   (memo/lru
-   (fn [loaded-records]
+   (fn [loaded-records weekend? weekday?]
      (pres/usage-by-time-json
-      (usage/weekday-usage-by-time-of-day loaded-records)))))
+      (usage/weekday-usage-by-time-of-day loaded-records
+                                          {:include-weekend weekend?
+                                           :include-weekdays weekday?})))))
 
 (def rides-by-month
   (memo/lru
@@ -43,6 +44,7 @@
    :headers {"Content-Type" "application/json"}
    :body json-str})
 
+
 (defn make-routes [loaded-records]
   (comp/routes
    (route/resources "/")
@@ -52,8 +54,11 @@
                                               :status 200
                                               :headers {"Content-Type" "application/json"}})
                      "text/html"))
-   (comp/GET "/usage_by_time_of_day.json" []
-             (json-response (usage-by-time-of-day loaded-records)))
+   (comp/GET "/usage_by_time_of_day.json" {{weekend? :weekend
+                                            weekday? :weekday} :params}
+             (json-response (usage-by-time-of-day loaded-records
+                                                  (read-string weekend?)
+                                                  (read-string weekday?))))
    (comment
      (comp/GET "/time-of-day-counts.json" {{weekend? :weekend} :params}
                (json/write-str
