@@ -11,7 +11,8 @@
              #^{:static true} [unloadRecords [Object] Object]
              ])
   (:require [hikesaber.ride-records.divvy-ride-records :as records]
-            [hikesaber.ride-records.off-heap-ride-records :as ohr]))
+            [hikesaber.ride-records.off-heap-ride-records :as ohr]
+            [hikesaber.record-cache :as cache]))
 
 ;; This can be helpful
 (comment (set! *warn-on-reflection* true))
@@ -22,7 +23,8 @@
      :offheap record-coll}))
 
 (defn -loadRecords []
-  (load-records-from records/loaded))
+  {:records (records/load-from-files)
+   :offheap (cache/load-cached-records)})
 
 (defn -unloadRecords [records]
   (ohr/dispose (:offheap records)))
