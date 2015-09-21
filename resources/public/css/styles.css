@@ -89,3 +89,8 @@ svg {
 .marker text {
   text-anchor: middle;
 }
+
+fieldset.inline {
+    display: inline;
+     border-radius: 5px;
+}

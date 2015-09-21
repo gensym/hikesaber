@@ -16,6 +16,15 @@
   (let [records (r/make-record-collection (map (fn [_] (make-record))  (range 12)))]
     (is (= 12 (count records)))))
 
+(deftest should-trim
+  (let [records (r/make-record-collection
+                 (map (fn [i]  (assoc (make-record) :bikeid (str i)))
+                      (range 12)))
+        trimmed (r/trim-to records 3 8)]
+    (is (= 6 (count trimmed)))
+    (is (=  (nth trimmed 0) (nth records 3)))
+    (is (= (nth trimmed 5) (nth records 8)))))
+
 (deftest should-get-nth
   (let [records (r/make-record-collection (map (fn [x] (assoc (make-record) :bikeid (str x)) )  (range 12)))]
     (is (= 3 (r/bike-id (nth records 3 ))))))

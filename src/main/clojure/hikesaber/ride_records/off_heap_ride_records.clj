@@ -91,6 +91,9 @@
 
 (defprotocol Disposable (dispose [this]))
 
+(defprotocol Trimmable
+  (trim-to [this start-index end-index]))
+
 (defprotocol AddressableUnsafe
   (unsafe [this])
   (address [this]))
@@ -98,21 +101,51 @@
 (defprotocol RecordObject
   (bike-id [this]))
 
-(defn make-record-object [unsafe offset]
-  (reify
+(deftype Record [the-unsafe offset]
+  Object
+  (equals [this that]
+    (if (not (= (type this) (type that)))
+      false
+      (loop [a-this (address this)
+             a-that (address that)
+             remaining object-size]
+        (cond
+         (= 0 remaining) true
+         (not (= (.getByte (unsafe this) a-this)
+                 (.getByte (unsafe that) a-that))) false
+                 :else (recur (inc a-this) (inc a-that) (dec remaining))))))
 
-    RecordObject
-    (bike-id [_] (get-bike-id unsafe offset))
+  (hashCode [_]
+    (loop [hash 1
+           a offset
+           remaining object-size]
+      (cond
+       (= 0 remaining) hash
+       :else (recur (+ hash (* 17 (.getByte the-unsafe a)))
+                    (inc a)
+                    (dec remaining)))))
 
-    clojure.lang.ILookup
+  (toString [this] (str
+                    (reduce (fn [m v] (assoc m v (v this)))
+                            {}
+                            [:bikeid :starttime :stoptime])))
 
-    (valAt [this key not-found]
-      (case key
-        :bikeid (get-bike-id unsafe offset) 
-        :starttime (get-start-time unsafe offset)
-        :stoptime (get-stop-time unsafe offset)
-        not-found))
-    (valAt [this key] (.valAt this key nil))))
+  AddressableUnsafe
+  (unsafe [_] the-unsafe)
+  (address [_] offset)
+
+  RecordObject
+  (bike-id [_] (get-bike-id the-unsafe offset))
+
+  clojure.lang.ILookup
+
+  (valAt [this key not-found]
+    (case key
+      :bikeid (get-bike-id the-unsafe offset)
+      :starttime (get-start-time the-unsafe offset)
+      :stoptime (get-stop-time the-unsafe offset)
+      not-found))
+  (valAt [this key] (.valAt this key nil)))
 
 (defn unsafe-reduce
   ([^Unsafe unsafe address num-records f]
@@ -120,11 +153,11 @@
        (f)
        (loop [i 1
               offset address
-              ret (f (make-record-object unsafe offset))]
+              ret (f (Record. unsafe offset))]
          (if (= i num-records)
            ret
            (let [offset (+ offset object-size)
-                 ret (f ret (make-record-object unsafe offset))]
+                 ret (f ret (Record. unsafe offset))]
              (if (reduced? ret)
                @ret
                (recur (inc i) offset ret)))))))
@@ -134,7 +167,7 @@
             ret v]
        (if (= i num-records)
          ret
-         (let [ret (f ret (make-record-object unsafe offset))]
+         (let [ret (f ret (Record. unsafe offset))]
            (if (reduced? ret)
              @ret
              (recur (inc i) (+ offset object-size) ret)))))))
@@ -146,15 +179,15 @@
       (.write ostream (.getByte unsafe (+ address i))))))
 
 
-;; deftype - implement Indexed,Counted,
-(deftype RecordCollection [^Unsafe unsafe address num-records]
+;; root? indicates whether this is derived from an existing RecordCollection - i.e., whether its records are in the same memory space as that collection
+(deftype RecordCollection [^Unsafe unsafe address num-records root?]
 
   clojure.core.protocols/CollReduce
   (coll-reduce [_ f] (unsafe-reduce unsafe address num-records f))
   (coll-reduce [_ f v] (unsafe-reduce unsafe address num-records f v))
 
   clojure.lang.Indexed
-  (nth [_ i] (make-record-object unsafe (+ address (* i object-size)) ))
+  (nth [_ i] (Record. unsafe (+ address (* i object-size)) ))
 
   (count [_] num-records)
 
@@ -166,8 +199,15 @@
   (serialize [this output-stream]
     (serialize-bytes output-stream unsafe address (* num-records object-size)))
 
+  Trimmable
+  (trim-to [this start-index end-index]
+    (RecordCollection. unsafe
+                       (+ address (* start-index object-size))
+                       (inc (- end-index start-index))
+                       false))
+
   Disposable
-  (dispose [_] (.freeMemory unsafe address)))
+  (dispose [_] (when root? (.freeMemory unsafe address))))
 
 (defn deserialize-bytes [^InputStream istream ^Unsafe unsafe]
   (let [istream (DataInputStream. istream)
@@ -177,7 +217,7 @@
       (do
         (dotimes [i num-bytes]
           (.putInt unsafe (+ address i) (.read istream)))
-        (RecordCollection. unsafe address (/ num-bytes object-size)))
+        (RecordCollection. unsafe address (/ num-bytes object-size) true))
       (catch Throwable t
         (do
           (.freeMemory unsafe address)
@@ -195,7 +235,7 @@
              records loaded-records
              offset address]
         (if (empty? records)
-          (RecordCollection. unsafe address num-records)
+          (RecordCollection. unsafe address num-records true)
           (do
             (let [record (first records)]
               (try
@@ -216,8 +256,10 @@
       (catch Throwable t
         (do
           (.freeMemory unsafe address)
-          (throw t)))
-      )))
+          (throw t))))))
+
+(defn make-empty-collection []
+  (make-record-collection {}))
 
 (defn read-record [record-collection index]
   (let [address (+ (:address record-collection) (* index object-size))

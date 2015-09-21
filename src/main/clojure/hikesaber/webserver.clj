@@ -9,7 +9,8 @@
             [hikesaber.divvy-ride-statistics :as divvy]
             [hikesaber.record-cache :as cache]
             [hikesaber.presentation.usage-counts :as pres]
-            [hikesaber.analysis.usage-by-time :as usage]))
+            [hikesaber.analysis.usage-by-time :as usage]
+            [hikesaber.ride-records.ranges :as ranges]))
 
 (defn load-records []
   (cache/load-cached-records))
@@ -27,6 +28,9 @@
       (usage/weekday-usage-by-time-of-day loaded-records
                                           {:include-weekend weekend?
                                            :include-weekdays weekday?})))))
+
+(defn date-range [loaded-records]
+  (pres/date-range (ranges/date-range loaded-records)))
 
 (def rides-by-month
   (memo/lru
@@ -59,11 +63,10 @@
              (json-response (usage-by-time-of-day loaded-records
                                                   (read-string weekend?)
                                                   (read-string weekday?))))
+
+   (comp/GET "/date_range.json" []
+             (json-response (date-range loaded-records)))
    (comment
-     (comp/GET "/time-of-day-counts.json" {{weekend? :weekend} :params}
-               (json/write-str
-                (json-response
-                 (rides-by-time-of-day loaded-records (read-string (or weekend? "false"))))))
      (comp/GET "/monthly-counts.json" req (json-response (json/write-str (rides-by-month loaded-records)))))
    (comp/GET "/ping" req {:status 200 :headers {"Content-Type" "text/html"} :body "hello"})
    (route/not-found "<p>Page not found.</p>")))

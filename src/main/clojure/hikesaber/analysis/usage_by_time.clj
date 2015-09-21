@@ -6,8 +6,6 @@
 
 (comment (def recs (hikesaber.record-cache/load-cached-records)))
 
-
-
 (defn- make-day-filter [{:keys [include-weekend include-weekdays]}]
   (cond
    (and include-weekend include-weekdays) (constantly true)

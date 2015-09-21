@@ -8,12 +8,14 @@
            [org.joda.time DateTime]))
 
 (def month-year-formatter (tf/formatter "M/d/yyyy"))
-(def time-formatter (tf/formatter "M/d/yyyy H:m ZZZ"))
+(def time-formatter (tf/formatter "M/d/yyyy H:mm ZZZ"))
 (def legacy-time-formatter (tf/formatter "yyyy-M-d H:m ZZZ"))
 
 (def day-formatter (tf/formatter "d"))
+
 (def month-formatter (tf/formatter "MM"))
 (def year-formatter (tf/formatter "yyyy"))
+(def date-formatter (tf/formatter "yyyy-MM-dd"))
 
 (def memo-parse (memo/lru (fn [s] (tf/parse time-formatter s))
                           :lru/threshold 10))
@@ -29,6 +31,14 @@
 
 (def to-day-string (memo/lru (fn [d] (tf/unparse day-formatter d))
                              :lru/threshold 10))
+
+(defn millis->datetime-string [millis]
+  (let [zone (org.joda.time.DateTimeZone/forID "America/Chicago")]
+
+    (.print (.withZone time-formatter zone)
+            (.toDateTime (org.joda.time.LocalDateTime. (DateTime. millis))
+                         zone))))
+
 (let [hour-strings (vec (concat (map #(str "0" %1) (range 10)) (map str (range 10 24))))
       minute-strings  (vec (concat (map #(str "0" %1) (range 10)) (map str (range 10 60))))]
   (def to-hour-minute-string (memo/lru (fn [minutes-of-day]
