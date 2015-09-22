@@ -15,8 +15,6 @@
     nil
     (loop [from 0
            to  (dec (count records))]
-      (println "From - " from)
-      (println "To - " to)
       (let [start (:starttime (nth records from))
             end (:starttime (nth records to))]
         (cond
@@ -39,8 +37,6 @@
     nil
     (loop [from 0
            to  (dec (count records))]
-      (println "e.From - " from)
-      (println "e.To - " to)
       (let [start (:stoptime (nth records from))
             end (:stoptime (nth records to))]
         (cond

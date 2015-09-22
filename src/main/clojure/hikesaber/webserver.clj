@@ -8,6 +8,7 @@
             [clojure.data.json :as json]
             [hikesaber.divvy-ride-statistics :as divvy]
             [hikesaber.record-cache :as cache]
+            [hikesaber.dates :as dates]
             [hikesaber.presentation.usage-counts :as pres]
             [hikesaber.analysis.usage-by-time :as usage]
             [hikesaber.ride-records.ranges :as ranges]))
@@ -15,19 +16,31 @@
 (defn load-records []
   (cache/load-cached-records))
 
-(def rides-by-time-of-day
-  (memo/lru
-   (fn [loaded-records weekend?]
-     (divvy/count-by-time-of-day loaded-records 15 (not weekend?)))
-   :lru/threshold 10))
+(defn- trimmed-records [records start-date end-date]
+  (if (= 0 (count records))
+    records
+    (let [start (if (nil? start-date)
+                  (:starttime (nth records 0))
+                  (.getMillis (dates/memo-parse-month-year start-date)))
+          end (if (nil? end-date)
+                (:stoptime (nth records (dec (count records))))
+                (.getMillis (dates/memo-parse-month-year end-date)))]
+      (if (< start end)
+        (ranges/trim-to-range records start end)
+        (ranges/trim-to-range records end end)))))
 
 (def usage-by-time-of-day
   (memo/lru
-   (fn [loaded-records weekend? weekday?]
-     (pres/usage-by-time-json
-      (usage/weekday-usage-by-time-of-day loaded-records
-                                          {:include-weekend weekend?
-                                           :include-weekdays weekday?})))))
+   (fn [loaded-records
+        weekend?
+        weekday?
+        start-date
+        end-date]
+     (let [records (trimmed-records loaded-records start-date end-date)]
+       (pres/usage-by-time-json
+        (usage/weekday-usage-by-time-of-day records
+                                            {:include-weekend weekend?
+                                             :include-weekdays weekday?}))))))
 
 (defn date-range [loaded-records]
   (pres/date-range (ranges/date-range loaded-records)))
@@ -59,10 +72,14 @@
                                               :headers {"Content-Type" "application/json"}})
                      "text/html"))
    (comp/GET "/usage_by_time_of_day.json" {{weekend? :weekend
-                                            weekday? :weekday} :params}
+                                            weekday? :weekday
+                                            start-date :start_date
+                                            end-date :end_date} :params}
              (json-response (usage-by-time-of-day loaded-records
                                                   (read-string weekend?)
-                                                  (read-string weekday?))))
+                                                  (read-string weekday?)
+                                                  start-date
+                                                  end-date)))
 
    (comp/GET "/date_range.json" []
              (json-response (date-range loaded-records)))

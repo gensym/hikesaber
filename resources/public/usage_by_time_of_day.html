@@ -61,11 +61,11 @@
                                     weekday: isChecked('#include_weekday')};
 
              if ($("#start_date").val()) {
-               params[start_date] = $("#start_date").val();
+               params["start_date"] = $("#start_date").val();
              }
 
              if ($("#end_date").val()) {
-               params[end_date] = $("#end_date").val();
+               params["end_date"] = $("#end_date").val();
              }
 
              var dataUrl = '/usage_by_time_of_day.json?' +
