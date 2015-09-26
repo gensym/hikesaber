@@ -26,10 +26,11 @@
   :profiles { :benchmark {:main org.openjdk.jmh.Main
                           :java-source-paths ["src/main/java" "src/benchmark/java"]
                           :prep-tasks [["compile" "hikesaber.benchmark.harness"] "javac" "compile"]}
+             :build-cache { :jvm-opts ["-Xmx8g"] }
              :uberjar {:aot :all}}
   :aliases {
             "make-record-cache"
-            ["trampoline" "run" "-m" "hikesaber.record-cache/make-cache"]
+            ["with-profile" "build-cache" "trampoline" "run" "-m" "hikesaber.record-cache/make-cache"]
 
             "clean-record-cache"
             ["trampoline" "run" "-m" "hikesaber.record-cache/clean-cache"]}
