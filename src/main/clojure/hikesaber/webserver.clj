@@ -8,26 +8,14 @@
             [clojure.data.json :as json]
             [hikesaber.divvy-ride-statistics :as divvy]
             [hikesaber.record-cache :as cache]
-            [hikesaber.dates :as dates]
             [hikesaber.presentation.usage-counts :as pres]
             [hikesaber.analysis.usage-by-time :as usage]
-            [hikesaber.ride-records.ranges :as ranges]))
+            [hikesaber.ride-records.ranges :as ranges]
+            [hikesaber.ride-records.helpers :as h]))
 
 (defn load-records []
   (cache/load-cached-records))
 
-(defn- trimmed-records [records start-date end-date]
-  (if (= 0 (count records))
-    records
-    (let [start (if (nil? start-date)
-                  (:starttime (nth records 0))
-                  (.getMillis (dates/memo-parse-month-year start-date)))
-          end (if (nil? end-date)
-                (:stoptime (nth records (dec (count records))))
-                (.getMillis (dates/memo-parse-month-year end-date)))]
-      (if (< start end)
-        (ranges/trim-to-range records start end)
-        (ranges/trim-to-range records end end)))))
 
 (def usage-by-time-of-day
   (memo/lru
@@ -36,7 +24,7 @@
         weekday?
         start-date
         end-date]
-     (let [records (trimmed-records loaded-records start-date end-date)]
+     (let [records (h/trimmed-records loaded-records start-date end-date)]
        (pres/usage-by-time-json
         (usage/weekday-usage-by-time-of-day records
                                             {:include-weekend weekend?

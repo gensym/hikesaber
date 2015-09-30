@@ -81,6 +81,11 @@
                     \M "Member"
                     \D "Dependent"})
 
+(def id->user-type-sym {\C :customer
+                        \M :member
+                        \D :dependent})
+
+
 (defn starttime ^DateTime [loaded-record]
   (:starttime loaded-record))
 
@@ -128,7 +133,12 @@
   (toString [this] (str
                     (reduce (fn [m v] (assoc m v (v this)))
                             {}
-                            [:bikeid :starttime :stoptime])))
+                            [:bikeid
+                             :starttime
+                             :stoptime
+                             :from-station-id
+                             :to-station-id
+                             :user-type])))
 
   AddressableUnsafe
   (unsafe [_] the-unsafe)
@@ -142,8 +152,11 @@
   (valAt [this key not-found]
     (case key
       :bikeid (get-bike-id the-unsafe offset)
+      :from-station-id (get-from-station-id the-unsafe offset)
+      :to-station-id (get-to-station-id the-unsafe offset)
       :starttime (get-start-time the-unsafe offset)
       :stoptime (get-stop-time the-unsafe offset)
+      :user-type (id->user-type-sym (get-user-type the-unsafe offset))
       not-found))
   (valAt [this key] (.valAt this key nil)))
 
