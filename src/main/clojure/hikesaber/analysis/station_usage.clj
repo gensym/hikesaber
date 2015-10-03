@@ -28,5 +28,26 @@
 (def customers (transduce (comp (filter (partial for-station station-id))
                               (filter (partial for-user-type :customer))) conj [] trimmed))
 
+(defn destinations [station-id]
+  (let [by-station-id
+        (transduce (comp
+                    (filter (fn [record] (= station-id (:from-station-id record))))
+                    (map h/to-station-info))
+                   (completing (fn [m v] (assoc m v (inc (get m v 0))))) {} trimmed)]
+    (->> by-station-id
+         (sort-by second)
+         reverse
+         (map (fn [[a b]] [(:name a) b])))))
 
+
+(defn sources [station-id]
+  (let [by-station-id
+        (transduce (comp
+                    (filter (fn [record] (= station-id (:to-station-id record))))
+                    (map h/from-station-info))
+                   (completing (fn [m v] (assoc m v (inc (get m v 0))))) {} trimmed)]
+    (->> by-station-id
+         (sort-by second)
+         reverse
+         (map (fn [[a b]] [(:name a) b])))))
 
