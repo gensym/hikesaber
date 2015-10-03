@@ -8,3 +8,4 @@ pom.xml.asc
 /.lein-*
 /.nrepl-port
 resources/data/ride_record_collection
+/tmp/
