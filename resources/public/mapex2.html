@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" />
+  <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script>
+  <style>
+    #map { height: 1200px; width: 400px; }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  Hi there
+
+  <script type="text/javascript">
+    var map = L.map('map').setView([41.8269, -87.6847], 11);
+
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+                {
+                 maxZoom: 18,
+                 minZoom: 8,
+                 attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+    L.marker([41.8269, -87.6847]).addTo(map)
+    .bindPopup('A pretty CSS3 popup.<br> Easily customizable.', {closeButton: false})
+    .openPopup();
+  </script>
+
+</body>
+</html>
