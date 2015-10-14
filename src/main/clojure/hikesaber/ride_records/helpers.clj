@@ -11,15 +11,18 @@
 (defn start-time [record] (DateTime. (:starttime record)))
 (defn stop-time [record] (DateTime. (:stoptime record)))
 
+(defn asof [time-function coll time]
+  (last (take-while #(> time (time-function %)) coll )))
+
 (defn from-station-info [record]
-  (let [ride-date (:starttime record)]
-    (last (take-while  #(> (:starttime record) (.getTime (:asof %)))
-                       (get station-info (:from-station-id record))))))
+  (asof #(.getTime (:asof %))
+        (get station-info (:from-station-id record))
+        (:starttime record)))
 
 (defn to-station-info [record]
-  (let [ride-date (:stoptime record)]
-    (last (take-while  #(> ride-date (.getTime (:asof %)))
-                       (get station-info (:to-station-id record))))))
+  (asof #(.getTime (:asof %))
+        (get station-info (:to-station-id record))
+        (:stoptime record)))
 
 (defn trimmed-records [records start-date end-date]
   "date format is M/d/yyyy"
