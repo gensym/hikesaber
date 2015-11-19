@@ -1,10 +1,16 @@
 # hikesaber
 
-A Clojure library designed to ... well, that part is up to you.
+A collection of tools for analyzing Divvy bike data
+
+## Prereqs
+
+You must have the following environment variables defined:
+
+* MAPBOX_API_KEY - the key for mapbox access. http://www.mapbox.com
 
 ## Usage
 
-FIXME
+
 
 ## License
 

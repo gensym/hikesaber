@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Station Usage</title>
+    <script type="text/javascript" src="js/jquery/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="js/station_usage.js"></script>
+    <script type="text/javascript" src="js/date_range_select.js"></script>
+    <script type="text/javascript" src="js/date_range_select.js"></script>
+    <script type="text/javascript" src="js/underscore/underscore-min.js"></script>
+
+    <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+    <link href="js/jquery-ui-1.11.4/jquery-ui.min.css" rel="stylesheet">
+
+    <script type="text/javascript" src="js/momentjs/moment.js"></script>
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+    <script type="text/javascript" src="js/d3/d3.min.js"></script>
+    <script type="text/javascript">
+    $(function() {
+
+      function refreshStationList(params) {
+        var url = "stations.json?" + $.param(params);
+        $.ajax(url).done(function(data)) {
+          var options = $("#station_selection select");
+          options.empty();
+          $.each(data, function(idx, station) {
+            options.append($("<option/>").val(station.id).text(station.name));
+          });
+        }
+      }
+
+      var params = {};
+      refreshStationList(params);
+      var onStartDateSet = function(d) {params[d] = d; refreshStationList(params);}
+      var onEndDateSet = function(d) {params[d] = d; refreshStationList(params);}
+
+      makeDateRangeSelector("#start_date", "#end_date", "#date_submit",
+                            onStartDateSet, onEndDateSet);
+
+      var plotter = make_station_usage_plotter("#station_map");
+      $.ajax("mapbox_api_key").done(function(api_key) {
+         plotter.set_mapbox_api_key(api_key);
+      });
+
+      $.ajax("rectangular_area.json").done(function(data) {
+        var min_lat = data['min-lat'];
+        var min_lon = data['min-lon'];
+        var max_lat = data['max-lat'];
+        var max_lon = data['max-lon'];
+        plotter.set_background_area(min_lat, min_lon, max_lat, max_lon);
+      });
+    });
+    </script>
+
+  </head>
+
+  <body>
+    <form id="daterange">
+      <fieldset class="inline">
+	<label for="start_date">Start Date</label>
+	<input type="text" id="start_date"/>
+
+	<label for="end_date">End Date</label>
+	<input type="text" id="end_date"/>
+      </fieldset>
+
+      <button id="date_submit">Submit</button>
+    </form>
+
+    <form id="station_selection">
+      <select>
+	<option value="first">First</option>
+	<option value="second">Second</option>
+      </select>
+    </form>
+
+    <div id="station_map" style="width:600px;height:400px;"></div>
+  </body>
+
+</html>
