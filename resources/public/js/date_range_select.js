@@ -24,6 +24,7 @@ function makeDateRangeSelector(startDateElementId,
             if ($(endDateElementId).val()) {
 		onEndDateSet($(endDateElementId).val());
             }
+	    return false;
 	});
     });
 

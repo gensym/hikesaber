@@ -35,7 +35,7 @@
   (loop [idx 0
          m (transient {})]
     (if (= idx (count ride-records))
-      (persistent! m)
+      (vals (persistent! m))
       (let [v (nth ride-records idx)]
         (recur (inc idx)
                (let [station-info (h/to-station-info v)]

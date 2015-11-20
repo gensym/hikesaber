@@ -7,4 +7,4 @@
 
 (defn stations [station-list]
   (json/write-str
-   (sort-by :id (map #(select-keys % [:id :names]))) station-list))
+   (sort-by :id (map #(select-keys % [:id :names]) station-list))))

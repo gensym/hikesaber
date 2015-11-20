@@ -5,7 +5,6 @@
     <script type="text/javascript" src="js/jquery/jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="js/station_usage.js"></script>
     <script type="text/javascript" src="js/date_range_select.js"></script>
-    <script type="text/javascript" src="js/date_range_select.js"></script>
     <script type="text/javascript" src="js/underscore/underscore-min.js"></script>
 
     <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
@@ -22,13 +21,16 @@
 
       function refreshStationList(params) {
         var url = "stations.json?" + $.param(params);
-        $.ajax(url).done(function(data)) {
+        $.ajax(url).done(function(data) {
           var options = $("#station_selection select");
           options.empty();
           $.each(data, function(idx, station) {
-            options.append($("<option/>").val(station.id).text(station.name));
+            if (station.names.length > 1) { alert(station.id);}
+            $.each(station.names, function (j, name) {
+              options.append($("<option/>").val(station.id).text(station.id + " - " + name));
+            });
           });
-        }
+        });
       }
 
       var params = {};
