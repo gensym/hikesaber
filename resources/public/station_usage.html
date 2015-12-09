@@ -25,7 +25,6 @@
           var options = $("#station_selection select");
           options.empty();
           $.each(data, function(idx, station) {
-            if (station.names.length > 1) { alert(station.id);}
             $.each(station.names, function (j, name) {
               options.append($("<option/>").val(station.id).text(station.id + " - " + name));
             });
@@ -46,13 +45,20 @@
          plotter.set_mapbox_api_key(api_key);
       });
 
-      $.ajax("rectangular_area.json").done(function(data) {
-        var min_lat = data['min-lat'];
-        var min_lon = data['min-lon'];
-        var max_lat = data['max-lat'];
-        var max_lon = data['max-lon'];
-        plotter.set_background_area(min_lat, min_lon, max_lat, max_lon);
+
+      $("#station_selection").submit(function() {
+        var station_id = $("#station_selection>select").val();
+        $.ajax("rectangular_area.json?" + $.param(_.extend(params, {station_id: station_id}))).done(function(data) {
+          var min_lat = data['min-lat'];
+          var min_lon = data['min-lon'];
+          var max_lat = data['max-lat'];
+          var max_lon = data['max-lon'];
+          plotter.set_background_area(min_lat, min_lon, max_lat, max_lon);
       });
+      return false;
+
+      });
+
     });
     </script>
 
@@ -76,6 +82,7 @@
 	<option value="first">First</option>
 	<option value="second">Second</option>
       </select>
+      <button id="station_submit">Submit</button>
     </form>
 
     <div id="station_map" style="width:600px;height:400px;"></div>

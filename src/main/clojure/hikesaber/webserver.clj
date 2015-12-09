@@ -95,10 +95,9 @@
                                         end-date :end_date
                                         station-id :station_id} :params}
              (json-response (rectangular-area loaded-records
-                                              station-id
+                                              (read-string station-id)
                                               start-date
-                                              end-date
-)))
+                                              end-date)))
 
    (comp/GET "/date_range.json" []
              (json-response (date-range loaded-records)))
